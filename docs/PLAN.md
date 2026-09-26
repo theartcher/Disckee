@@ -1,6 +1,6 @@
 # Disckee: project plan
 
-A free, public website where Arthur and his partner catalog their shared CD
+A free, public website where Arthur and Marlou catalog their shared CD
 collection and wishlist. Friends and family can browse and quietly claim
 wishlist items as gifts. Adding a CD takes a few taps on a phone: scan the
 barcode, pick the right release, save.
@@ -81,8 +81,8 @@ the size Cover Art Archive serves.
 | `cover` | image | Path under `src/assets/covers/` |
 | `coverCredit` | enum | `cover-art-archive` \| `own-photo` \| `other` |
 | `status` | enum | `collection` \| `wishlist` |
-| `owner` | enum | `arthur` \| `<partner>` \| `shared` (default `shared`) |
-| `addedBy` | string | GitHub login, set automatically by `/add` |
+| `owner` | enum | `arthur` \| `marlou` \| `shared` (default `shared`) |
+| `addedBy` | enum | `arthur` \| `marlou`, set automatically from the device's "who's this?" choice in `/add` |
 | `addedAt` | date | Set automatically |
 | `acquiredAt` | date, optional | Set when a wishlist item becomes collection ("got it") |
 | `note` | string, optional | Short personal text, max ~280 chars |
@@ -229,8 +229,8 @@ Each phase ships something usable.
 1. **Foundation**: Astro project, content schema, sample albums, collection
    grid, album page, base styling (light/dark), CI (`astro check` + build).
 2. **Deploy + editing**: app Worker with static assets on Workers Builds,
-   sveltia-cms-auth Worker + GitHub OAuth app, Sveltia at `/admin`, both
-   owners added as collaborators.
+   sveltia-cms-auth Worker + GitHub OAuth app, Sveltia at `/admin`, Arthur's
+   login set up on Marlou's phone.
 3. **Lookup + `/add`**: Worker lookup endpoints (MusicBrainz + CAA, Discogs
    fallback), `/add` page with scanner, candidate picker, one-commit save,
    duplicate check, fallbacks.
@@ -255,17 +255,19 @@ Each phase ships something usable.
 | `addedBy` typed in by hand | **Set from the GitHub login** | One less tap, can't be wrong. |
 | Rebuild message to prevent duplicates | **Message + duplicate check against `albums.json` + local recent list** | The message alone doesn't stop a second scan. |
 
-## 10. Open decisions (defaults in bold)
+## 10. Decisions
 
-1. **Metadata source**: **MusicBrainz first, Discogs fallback** / Discogs only
-   (then covers must be our own photos).
-2. **Partner's GitHub account**: **they create one** / no GitHub (then
-   editing needs a different login, e.g. Cloudflare Access + a bot token).
-3. **Claim visibility**: **hidden by default, givers opt in** / owner-mode
-   toggle as originally planned.
-4. **Site language**: **English** / Dutch / both.
-5. **Partner's display name** for the `owner` field: **placeholder
-   `partner`** until given.
+1. **Metadata source**: MusicBrainz first, Discogs fallback (default; open to
+   revisiting).
+2. **Editing logins**: only Arthur has a GitHub account (collaborator on the
+   repo). Marlou doesn't need one: Marlou's phone is signed in from Arthur's
+   session (Sveltia's QR-code login, or a fine-grained token limited to this
+   repo). `/add` asks once per device "Who's this?" so `addedBy` and the site
+   show the right person; git history shows Arthur as the committer.
+3. **Claim visibility**: hidden by default, gift-givers opt in. Claims clear
+   automatically when an item moves from wishlist to collection.
+4. **Site language**: English.
+5. **Owner names**: Arthur and Marlou.
 
 ## 11. Out of scope (for now)
 
