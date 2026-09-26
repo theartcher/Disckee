@@ -1,0 +1,24 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+// Placeholder until the cover grid (#4) and styling (#6) land.
+const albums = (await getCollection('albums', ({ data }) => data.status === 'collection')).sort(
+  (a, b) => b.data.addedAt.valueOf() - a.data.addedAt.valueOf(),
+);
+---
+
+<Base>
+  <h1>Disckee</h1>
+  <p>Arthur and Marlou's CD collection.</p>
+  <ul>
+    {
+      albums.map(({ data }) => (
+        <li>
+          {data.artist} – {data.title}
+          {data.year && ` (${data.year})`}
+        </li>
+      ))
+    }
+  </ul>
+</Base>
