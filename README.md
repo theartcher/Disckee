@@ -1,7 +1,7 @@
 # Disckee
 
-Our CD collection and wishlist, as a website. Friends and family can browse it
-and quietly claim wishlist items as gifts.
+Our CD collection and wishlist, as a website. Friends and family can browse it,
+wishlist included, for gift ideas.
 
 - **Browse:** the public site (collection, album pages, wishlist).
 - **Add a CD:** `/add` on your phone. Scan the barcode, pick the release, save.

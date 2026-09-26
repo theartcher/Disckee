@@ -1,8 +1,8 @@
 # Disckee: project plan
 
 A free, public website where Arthur and Marlou catalog their shared CD
-collection and wishlist. Friends and family can browse it and claim wishlist
-items as gifts. Adding a CD takes a few taps on a phone: scan the barcode,
+collection and wishlist. Friends and family can browse it, including the
+wishlist, when looking for gift ideas. Adding a CD takes a few taps on a phone: scan the barcode,
 pick the right release, save.
 
 Design rule: **everything is static and lives on GitHub.** No servers, no
@@ -53,7 +53,7 @@ What each piece used to need a server for, and what replaces it:
 | CMS login | OAuth helper Worker | Sveltia's **personal access token** sign-in. No OAuth app, no server |
 | Saving a new CD | Worker | Browser commits via the GitHub API with the same token |
 | Hosting + rebuild | Cloudflare Pages | **GitHub Actions → GitHub Pages** |
-| Gift claims | Worker + D1 | See section 6 (open decision) |
+| Gift claims | Worker + D1 | Dropped: family coordinates in their own chat |
 
 Discogs is dropped: its barcode search requires a secret token, which can't
 live in a static site, and its terms don't allow storing its data long-term,
@@ -92,8 +92,7 @@ The schema is defined once with Zod in `src/content.config.ts`, and the
 Sveltia config mirrors it. A CI check fails the build if the two drift apart.
 
 The build also emits `/albums.json` (slug, ids and status for every album).
-`/add` uses it to spot duplicates, and the wishlist uses it to ignore claims
-for items that are no longer on the wishlist.
+`/add` uses it to spot duplicates.
 
 ## 4. Public site
 
@@ -102,7 +101,7 @@ for items that are no longer on the wishlist.
   client-side over a prebuilt index.
 - **Album page**: big cover, tracklist, metadata, note, who added it and when,
   and a "View on MusicBrainz" link.
-- **Wishlist**: same grid. Claim state is hidden by default (section 6).
+- **Wishlist**: same grid, with share links (section 6).
 - Light/dark follows the system, with a manual toggle. Warm, personal styling:
   covers first, text second, no tables.
 - Served from `theartcher.github.io/Disckee` (Astro `base: '/Disckee'`), or a
@@ -167,28 +166,17 @@ Used for everything else: fixing fields, notes, favourites, deleting, and
 Commits go straight to `main`. The list is sorted by `addedAt` (newest
 first), with a wishlist/collection filter.
 
-## 6. Gift claims (open decision)
+## 6. Gift claims: none online
 
-GitHub Pages can't store anything a visitor sends, so claims need somewhere
-to write. **Default until decided: a Google Form + Sheet**, which is free,
-has been stable for over a decade, and involves no code or hosting of ours.
+Decided: there are no online claims. The wishlist is a plain list, and family
+coordinates who buys what in their own chat. This keeps the site 100% static
+with nothing to store, expire or protect against surprises leaking.
 
-- "I'll get this" opens the Google Form, with the album prefilled through a
-  prefill link. The visitor can add an optional name.
-- The sheet publishes a CSV of `slug, name, timestamp`. The wishlist fetches
-  it and shows "Claimed" only for items still on the wishlist and claimed
-  within the last 60 days. Expiry and "got it" cleanup therefore happen
-  automatically, and nothing has to be deleted.
-- **Surprise protection:** claim state is hidden until a visitor taps "I'm
-  buying a gift, show what's taken". Phones signed in to `/add` or `/admin`
-  get an "are you sure? this spoils surprises" prompt first.
-- The form and sheet are owned by a family member's Google account, not
-  Arthur's or Marlou's, so neither owner ever sees them.
-- Un-claiming or a full reset after a birthday is done by that family member
-  deleting rows in the sheet.
-
-The other options were "no online claims" (family coordinates in their own
-chat) and "one tiny serverless function just for claims".
+What the wishlist does offer:
+- A share button (native share sheet) for the wishlist page and each item,
+  so it's easy to drop a link in the family chat.
+- When a gift arrives, "Got it" in `/admin` moves the item to the collection,
+  and it drops off the wishlist on the next rebuild.
 
 ## 7. Build phases
 
@@ -201,8 +189,7 @@ Each phase ships something usable.
    QR login to a second phone, "who's this?" device choice.
 3. **`/add`**: scanner, MusicBrainz lookup, candidate picker, cover fetch,
    one-commit save, duplicate check, fallbacks.
-4. **Wishlist + claims**: wishlist page, the claim mechanism chosen in
-   section 6, spoiler-off reveal.
+4. **Wishlist**: wishlist page, share links, "got it" flow.
 5. **Polish**: filters and search, recently added, stats (per artist, decade,
    genre, owner), random pick, favourites shelf, PWA manifest.
 
@@ -214,11 +201,9 @@ Each phase ships something usable.
    storage).
 3. **Logins**: one fine-grained token from Arthur, shared to Marlou's phone
    by QR code. Marlou doesn't need a GitHub account.
-4. **Claim visibility**: hidden by default, gift-givers opt in. Claims stop
-   counting once an item moves to the collection.
+4. **Gift claims**: none online; family coordinates in their own chat.
 5. **Site language**: English.
 6. **Owner names**: Arthur and Marlou.
-7. **Claims storage**: open, defaulting to Google Form + Sheet (section 6).
 
 ## 9. Out of scope (for now)
 
