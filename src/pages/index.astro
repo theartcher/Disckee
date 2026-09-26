@@ -1,24 +1,12 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import AlbumListPage from '../components/AlbumListPage';
+import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
 
-// Placeholder until the cover grid (#4) and styling (#6) land.
-const albums = (await getCollection('albums', ({ data }) => data.status === 'collection')).sort(
-  (a, b) => b.data.addedAt.valueOf() - a.data.addedAt.valueOf(),
-);
+const albums = await Promise.all((await albumsByStatus('collection')).map(toCard));
+const count = `${albums.length} ${albums.length === 1 ? 'album' : 'albums'}, newest first.`;
 ---
 
 <Base>
-  <h1>Disckee</h1>
-  <p>Arthur and Marlou's CD collection.</p>
-  <ul>
-    {
-      albums.map(({ data }) => (
-        <li>
-          {data.artist} – {data.title}
-          {data.year && ` (${data.year})`}
-        </li>
-      ))
-    }
-  </ul>
+  <AlbumListPage client:only="react" baseUrl={baseUrl} section="collection" title="Our collection" subtitle={count} albums={albums} />
 </Base>

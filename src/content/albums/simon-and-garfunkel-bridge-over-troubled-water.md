@@ -9,7 +9,7 @@ tracklist:
   - { position: "2", title: El Condor Pasa (If I Could) }
   - { position: "3", title: Cecilia }
   - { position: "4", title: Keep the Customer Satisfied }
-  - { position: "5", title: So Long, Frank Lloyd Wright }
+  - { position: "5", title: "So Long, Frank Lloyd Wright" }
   - { position: "6", title: The Boxer }
   - { position: "7", title: Baby Driver }
   - { position: "8", title: The Only Living Boy in New York }

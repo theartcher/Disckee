@@ -1,0 +1,18 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import AlbumPage from '../../components/AlbumPage';
+import { baseUrl, toDetail, type Album } from '../../lib/albums';
+
+export async function getStaticPaths() {
+  const albums = await getCollection('albums');
+  return albums.map((album) => ({ params: { id: album.id }, props: { album } }));
+}
+
+const { album } = Astro.props as { album: Album };
+const detail = await toDetail(album);
+---
+
+<Base title={`${detail.title} by ${detail.artist}`}>
+  <AlbumPage client:only="react" baseUrl={baseUrl} album={detail} />
+</Base>

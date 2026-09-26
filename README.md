@@ -9,7 +9,7 @@ wishlist included, for gift ideas.
 
 Every change is a commit to `main`; the site rebuilds in about a minute.
 
-Stack: Astro (static) on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Art
+Stack: Astro (static) + React with Ant Design, on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Art
 Archive, called straight from the browser. No servers.
 
 See [docs/PLAN.md](docs/PLAN.md) for the full plan and the reasoning behind it.
@@ -18,9 +18,10 @@ See [docs/PLAN.md](docs/PLAN.md) for the full plan and the reasoning behind it.
 
 ```sh
 npm install
-npm run dev     # http://localhost:4321/Disckee/
-npm run check   # type-check, including album front matter
-npm run build   # static site in dist/
+npm run dev        # http://localhost:4321/Disckee/
+npm run typecheck  # astro check, including album front matter
+npm run lint       # oxlint
+npm run build      # static site in dist/
 ```
 
 Albums live in `src/content/albums/<slug>.md`, covers in
@@ -30,3 +31,7 @@ real CDs are in.
 
 Deploys run from `.github/workflows/deploy.yml` on every push to `main`. One-time
 setup: in the repo's Settings → Pages, set **Source** to **GitHub Actions**.
+
+Every pull request runs three checks: `typecheck`, `lint` and `build`. To make
+them block merging, add a branch ruleset for `main` (Settings → Rules →
+Rulesets) with "Require status checks to pass" and those three checks.

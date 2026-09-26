@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import AlbumListPage from '../components/AlbumListPage';
+import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
+
+// Basic grid for now; share links and the visitor intro come with #15.
+const albums = await Promise.all((await albumsByStatus('wishlist')).map(toCard));
+---
+
+<Base title="Wishlist">
+  <AlbumListPage
+    client:only="react"
+    baseUrl={baseUrl}
+    section="wishlist"
+    title="Wishlist"
+    subtitle="CDs we'd love to add to the collection."
+    albums={albums}
+  />
+</Base>
