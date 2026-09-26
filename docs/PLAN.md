@@ -227,8 +227,8 @@ Each phase ships something usable.
    dropped (needs a secret token; terms forbid long-term storage).
 3. **Logins**: no homebrew auth. Each person signs in with their own GitHub
    account (2FA) through Sveltia's official authenticator. Marlou creates a
-   GitHub account. (Pending Arthur's pick; alternatives were Pages CMS or
-   Netlify as the OAuth relay.)
+   GitHub account. The authenticator runs on a free Cloudflare Worker
+   (chosen over Pages CMS or Netlify as the relay).
 4. **Gift claims**: none online; family coordinates in their own chat.
 5. **Site language**: English.
 6. **Owner names**: Arthur and Marlou.
