@@ -31,6 +31,11 @@ two drift apart.
 The sample albums and their "SAMPLE" covers are placeholders; delete them once
 real CDs are in.
 
+To try `/admin` locally without signing in: run `npm run dev`, open
+http://localhost:4321/Disckee/admin/ in Chrome or Edge, pick **Work with Local
+Repository** and choose this folder. Saves write files to your working copy;
+commit them yourself.
+
 Setting up sign-in for `/admin` (once): see [docs/SETUP.md](docs/SETUP.md).
 
 Deploys run from `.github/workflows/deploy.yml` on every push to `main`. One-time

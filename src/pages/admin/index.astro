@@ -6,6 +6,8 @@ import { checkCmsFields } from '../../lib/cms-check';
 checkCmsFields();
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+// In dev the CMS always loads, for Sveltia's "Work with Local Repository" mode.
+const enabled = Boolean(authUrl) || import.meta.env.DEV;
 ---
 
 <!doctype html>
@@ -19,7 +21,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   </head>
   <body>
     {
-      authUrl ? (
+      enabled ? (
         <script>
           import { init } from '@sveltia/cms';
           import { cmsConfig } from '../../lib/cms';
