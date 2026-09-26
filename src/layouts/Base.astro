@@ -1,8 +1,20 @@
 ---
+import '../styles/global.css';
+import ThemeToggle from '../components/ThemeToggle.astro';
+
 interface Props {
   title?: string;
+  /** Which nav item to highlight; defaults to the one matching the URL. */
+  section?: 'collection' | 'wishlist';
 }
 const { title } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const path = Astro.url.pathname.replace(/\/$/, '');
+const section = Astro.props.section ?? (path.startsWith(`${base}/wishlist`) ? 'wishlist' : 'collection');
+const nav = [
+  { href: `${base}/`, label: 'Collection', current: section === 'collection' },
+  { href: `${base}/wishlist/`, label: 'Wishlist', current: section === 'wishlist' },
+];
 ---
 
 <!doctype html>
@@ -11,10 +23,78 @@ const { title } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} type="image/svg+xml" />
+    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
     <title>{title ? `${title} · Disckee` : 'Disckee'}</title>
+    <script is:inline>
+      // Apply a remembered theme before first paint to avoid a flash.
+      try {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
   </head>
   <body>
-    <slot />
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="brand" href={`${base}/`}>Disckee</a>
+        <nav aria-label="Main">
+          {
+            nav.map((item) => (
+              <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+        <ThemeToggle />
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
   </body>
 </html>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    margin-right: auto;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  nav a[aria-current='page'] {
+    color: var(--text);
+    background: var(--accent-soft);
+  }
+  main {
+    padding-top: 24px;
+    padding-bottom: 64px;
+  }
+</style>

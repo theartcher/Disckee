@@ -1,0 +1,215 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Cover from '../../components/Cover.astro';
+import { formatDate, groupByDisc, personName, type Album } from '../../lib/albums';
+
+export async function getStaticPaths() {
+  const albums = await getCollection('albums');
+  return albums.map((album) => ({ params: { id: album.id }, props: { album } }));
+}
+
+const { album } = Astro.props as { album: Album };
+const d = album.data;
+const onWishlist = d.status === 'wishlist';
+const discs = groupByDisc(d.tracklist);
+const facts = [
+  d.year && { label: 'Year', value: String(d.year) },
+  d.label && { label: 'Label', value: d.label },
+  { label: onWishlist ? 'Wished for by' : 'Belongs to', value: personName(d.owner) },
+].filter((fact): fact is { label: string; value: string } => Boolean(fact));
+---
+
+<Base title={`${d.title} by ${d.artist}`} section={d.status}>
+  <article>
+    <div class="cover-col">
+      <Cover album={album} widths={[360, 500]} sizes="(min-width: 760px) 360px, 100vw" loading="eager" />
+    </div>
+
+    <div class="info">
+      {onWishlist && <p class="badge">On our wishlist</p>}
+      <h1>{d.title}</h1>
+      <p class="artist">{d.artist}</p>
+
+      <dl class="facts">
+        {
+          facts.map((fact) => (
+            <div>
+              <dt>{fact.label}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+
+      {
+        d.genres.length > 0 && (
+          <ul class="genres" aria-label="Genres">
+            {d.genres.map((genre) => (
+              <li>{genre}</li>
+            ))}
+          </ul>
+        )
+      }
+
+      {d.note && <blockquote class="note">{d.note}</blockquote>}
+
+      <p class="meta">
+        {d.acquiredAt && <>Got it on {formatDate(d.acquiredAt)}. </>}
+        Added {d.addedBy && <>by {personName(d.addedBy)} </>}on {formatDate(d.addedAt)}.
+      </p>
+
+      {
+        d.ids.musicbrainz && (
+          <p>
+            <a href={`https://musicbrainz.org/release/${d.ids.musicbrainz}`} rel="external">
+              View on MusicBrainz
+            </a>
+          </p>
+        )
+      }
+    </div>
+
+    {
+      discs.length > 0 && (
+        <section class="tracks" aria-labelledby="tracklist">
+          <h2 id="tracklist">Tracklist</h2>
+          {discs.map(({ disc, tracks }) => (
+            <>
+              {discs.length > 1 && <h3>Disc {disc}</h3>}
+              <ol>
+                {tracks.map((track) => (
+                  <li>
+                    <span class="pos">{track.position}</span>
+                    <span class="name">{track.title}</span>
+                    {track.duration && <span class="dur">{track.duration}</span>}
+                  </li>
+                ))}
+              </ol>
+            </>
+          ))}
+        </section>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  article {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 760px) {
+    article {
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 32px 48px;
+      align-items: start;
+    }
+    .tracks {
+      grid-column: 2;
+    }
+  }
+  .cover-col {
+    max-width: 420px;
+  }
+  .badge {
+    display: inline-block;
+    margin: 0 0 10px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  h1 {
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
+  }
+  .artist {
+    margin: 6px 0 20px;
+    font-size: 1.2rem;
+    color: var(--muted);
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+    margin: 0 0 16px;
+  }
+  dt {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  dd {
+    margin: 0;
+    font-weight: 500;
+  }
+  .genres {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 0;
+  }
+  .genres li {
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .note {
+    margin: 0 0 20px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-style: italic;
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  h2 {
+    font-size: 1.4rem;
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 16px 0 4px;
+  }
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  ol li {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pos {
+    min-width: 2ch;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .name {
+    flex: 1;
+  }
+  .dur {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+</style>

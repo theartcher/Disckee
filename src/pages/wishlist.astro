@@ -3,13 +3,14 @@ import Base from '../layouts/Base.astro';
 import AlbumGrid from '../components/AlbumGrid.astro';
 import { albumsByStatus } from '../lib/albums';
 
-const albums = await albumsByStatus('collection');
+// Basic grid for now; share links and the visitor intro come with #15.
+const albums = await albumsByStatus('wishlist');
 ---
 
-<Base>
+<Base title="Wishlist">
   <div class="intro">
-    <h1>Our CD rack</h1>
-    <p>{albums.length} {albums.length === 1 ? 'album' : 'albums'} on the shelf, newest first.</p>
+    <h1>Wishlist</h1>
+    <p>CDs we'd love to add to the rack.</p>
   </div>
   <AlbumGrid albums={albums} />
 </Base>
