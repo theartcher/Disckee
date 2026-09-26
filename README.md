@@ -13,3 +13,20 @@ Stack: Astro (static) on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Ar
 Archive, called straight from the browser. No servers.
 
 See [docs/PLAN.md](docs/PLAN.md) for the full plan and the reasoning behind it.
+
+## Development
+
+```sh
+npm install
+npm run dev     # http://localhost:4321/Disckee/
+npm run check   # type-check, including album front matter
+npm run build   # static site in dist/
+```
+
+Albums live in `src/content/albums/<slug>.md`, covers in
+`src/assets/covers/<slug>.jpg`. The schema is in `src/content.config.ts`.
+The sample albums and their "SAMPLE" covers are placeholders; delete them once
+real CDs are in.
+
+Deploys run from `.github/workflows/deploy.yml` on every push to `main`. One-time
+setup: in the repo's Settings → Pages, set **Source** to **GitHub Actions**.

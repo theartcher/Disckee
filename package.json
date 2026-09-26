@@ -1,0 +1,20 @@
+{
+  "name": "disckee",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "astro": "^7.3.5",
+    "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}
