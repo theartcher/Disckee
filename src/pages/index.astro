@@ -1,28 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
-import AlbumGrid from '../components/AlbumGrid.astro';
-import { albumsByStatus } from '../lib/albums';
+import AlbumListPage from '../components/AlbumListPage';
+import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
 
-const albums = await albumsByStatus('collection');
+const albums = await Promise.all((await albumsByStatus('collection')).map(toCard));
+const count = `${albums.length} ${albums.length === 1 ? 'album' : 'albums'}, newest first.`;
 ---
 
 <Base>
-  <div class="intro">
-    <h1>Our CD rack</h1>
-    <p>{albums.length} {albums.length === 1 ? 'album' : 'albums'} on the shelf, newest first.</p>
-  </div>
-  <AlbumGrid albums={albums} />
+  <AlbumListPage client:only="react" baseUrl={baseUrl} section="collection" title="Our collection" subtitle={count} albums={albums} />
 </Base>
-
-<style>
-  .intro {
-    margin-bottom: 24px;
-  }
-  h1 {
-    font-size: clamp(1.8rem, 6vw, 2.6rem);
-  }
-  p {
-    margin: 6px 0 0;
-    color: var(--muted);
-  }
-</style>

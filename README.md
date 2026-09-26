@@ -9,7 +9,7 @@ wishlist included, for gift ideas.
 
 Every change is a commit to `main`; the site rebuilds in about a minute.
 
-Stack: Astro (static) on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Art
+Stack: Astro (static) + React with Ant Design, on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Art
 Archive, called straight from the browser. No servers.
 
 See [docs/PLAN.md](docs/PLAN.md) for the full plan and the reasoning behind it.

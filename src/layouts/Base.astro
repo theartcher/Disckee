@@ -1,20 +1,11 @@
 ---
-import '../styles/global.css';
-import ThemeToggle from '../components/ThemeToggle.astro';
+import 'antd/dist/reset.css';
 
 interface Props {
   title?: string;
-  /** Which nav item to highlight; defaults to the one matching the URL. */
-  section?: 'collection' | 'wishlist';
 }
 const { title } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const path = Astro.url.pathname.replace(/\/$/, '');
-const section = Astro.props.section ?? (path.startsWith(`${base}/wishlist`) ? 'wishlist' : 'collection');
-const nav = [
-  { href: `${base}/`, label: 'Collection', current: section === 'collection' },
-  { href: `${base}/wishlist/`, label: 'Wishlist', current: section === 'wishlist' },
-];
 ---
 
 <!doctype html>
@@ -26,75 +17,32 @@ const nav = [
     <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
     <title>{title ? `${title} · Disckee` : 'Disckee'}</title>
     <script is:inline>
-      // Apply a remembered theme before first paint to avoid a flash.
+      // Pick the theme before the page renders so it doesn't flash white in dark mode.
       try {
-        const theme = localStorage.getItem('theme');
-        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+        const stored = localStorage.getItem('theme');
+        document.documentElement.dataset.theme =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
       } catch {}
     </script>
+    <style is:global>
+      /* Matches Ant Design's colorBgLayout, shown until the page has loaded. */
+      html,
+      body {
+        background: #f5f5f5;
+      }
+      html[data-theme='dark'],
+      html[data-theme='dark'] body {
+        background: #000;
+        color-scheme: dark;
+      }
+    </style>
   </head>
   <body>
-    <header class="site-header">
-      <div class="wrap bar">
-        <a class="brand" href={`${base}/`}>Disckee</a>
-        <nav aria-label="Main">
-          {
-            nav.map((item) => (
-              <a href={item.href} aria-current={item.current ? 'page' : undefined}>
-                {item.label}
-              </a>
-            ))
-          }
-        </nav>
-        <ThemeToggle />
-      </div>
-    </header>
-    <main class="wrap">
-      <slot />
-    </main>
+    <slot />
+    <noscript>Disckee needs JavaScript to show the collection.</noscript>
   </body>
 </html>
-
-<style>
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--border);
-  }
-  .bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 56px;
-  }
-  .brand {
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    font-weight: 600;
-    color: var(--text);
-    text-decoration: none;
-    margin-right: auto;
-  }
-  nav {
-    display: flex;
-    gap: 4px;
-  }
-  nav a {
-    color: var(--muted);
-    text-decoration: none;
-    padding: 10px 12px;
-    border-radius: 999px;
-    font-weight: 500;
-  }
-  nav a[aria-current='page'] {
-    color: var(--text);
-    background: var(--accent-soft);
-  }
-  main {
-    padding-top: 24px;
-    padding-bottom: 64px;
-  }
-</style>
