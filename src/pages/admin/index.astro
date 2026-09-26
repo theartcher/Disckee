@@ -1,0 +1,36 @@
+---
+import { authUrl } from '../../lib/cms';
+import { checkCmsFields } from '../../lib/cms-check';
+
+// Fails the build if the CMS fields and the album schema have drifted apart.
+checkCmsFields();
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
+    <title>Disckee admin</title>
+  </head>
+  <body>
+    {
+      authUrl ? (
+        <script>
+          import { init } from '@sveltia/cms';
+          import { cmsConfig } from '../../lib/cms';
+
+          init({ config: cmsConfig(new URL(import.meta.env.BASE_URL, location.origin).href) });
+        </script>
+      ) : (
+        <p style="font-family: system-ui, sans-serif; margin: 2rem">
+          Sign-in isn't set up yet. See docs/SETUP.md in the repository.
+        </p>
+      )
+    }
+  </body>
+</html>

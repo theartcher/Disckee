@@ -25,9 +25,13 @@ npm run build      # static site in dist/
 ```
 
 Albums live in `src/content/albums/<slug>.md`, covers in
-`src/assets/covers/<slug>.jpg`. The schema is in `src/content.config.ts`.
+`src/assets/covers/<slug>.jpg`. The schema is in `src/lib/album-schema.ts`;
+the `/admin` fields in `src/lib/cms.ts` mirror it, and the build fails if the
+two drift apart.
 The sample albums and their "SAMPLE" covers are placeholders; delete them once
 real CDs are in.
+
+Setting up sign-in for `/admin` (once): see [docs/SETUP.md](docs/SETUP.md).
 
 Deploys run from `.github/workflows/deploy.yml` on every push to `main`. One-time
 setup: in the repo's Settings → Pages, set **Source** to **GitHub Actions**.

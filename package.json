@@ -14,6 +14,7 @@
     "@ant-design/icons": "^6.3.4",
     "@astrojs/check": "^0.9.10",
     "@astrojs/react": "^7.0.0",
+    "@sveltia/cms": "^0.221.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "antd": "^6.6.5",
