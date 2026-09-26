@@ -4,7 +4,7 @@ Our CD collection and wishlist, as a website. Friends and family can browse it,
 wishlist included, for gift ideas.
 
 - **Browse:** the public site (collection, album pages, wishlist).
-- **Add a CD:** `/add` on your phone. Scan the barcode, pick the release, save.
+- **Add a CD:** `/add` on your phone. Scan the barcode, pick the release, then save in the prefilled form (signed in with GitHub).
 - **Edit:** `/admin` (Sveltia CMS). Fix details, add notes, mark "got it".
 
 Every change is a commit to `main`; the site rebuilds in about a minute.

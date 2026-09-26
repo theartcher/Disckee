@@ -5,22 +5,25 @@ collection and wishlist. Friends and family can browse it, including the
 wishlist, when looking for gift ideas. Adding a CD takes a few taps on a phone: scan the barcode,
 pick the right release, save.
 
-Design rule: **everything is static and lives on GitHub.** No servers, no
-Workers, no databases, nothing with a pricing page that can change under us.
-If a piece needs a server, we find a way around it or drop it.
+Design rules:
+- **Everything is static and lives on GitHub.** No servers, databases or
+  code of ours running anywhere but GitHub Actions.
+- **No homebrew login or authentication, ever.** Sign-in is GitHub's own
+  (password + 2FA per person), through Sveltia's official, maintained
+  authenticator. We write no auth code and handle no tokens ourselves.
 
 ---
 
 ## 1. Constraints
 
-- **Zero cost, zero servers.** GitHub (repo, Actions, Pages) plus public,
-  free, keyless APIs called straight from the browser.
-- **Public to read, two people to edit.** Only Arthur has a GitHub account.
-  Marlou edits through a login shared from Arthur's (see section 5).
+- **Zero cost.** GitHub (repo, Actions, Pages), public keyless APIs, and one
+  free, stock Sveltia authenticator (section 5). That authenticator is the
+  only piece not on GitHub.
+- **Public to read, two people to edit.** Arthur and Marlou each have their
+  own GitHub account and are the only collaborators with write access.
 - **Non-technical editing.** No pull requests and no hand-edited files for
   day-to-day use. New CDs go through `/add`; edits go through `/admin`.
-- **Official APIs only, never scraping.** No secret tokens anywhere in the
-  site.
+- **Official APIs only, never scraping.** No secrets anywhere in the site.
 - **Mobile-first web** (not a native app).
 
 ## 2. Architecture
@@ -31,15 +34,17 @@ If a piece needs a server, we find a way around it or drop it.
    │                          │                          │
  public site             /add (scanner)             /admin (Sveltia CMS)
  browse, wishlist        scan → MusicBrainz         edit, "got it", notes
-   │                     → pick → save                   │
-   │                          │  GitHub API (Arthur's token, in the browser)
-   │                          ▼                          ▼
+   │                     → pick ──── opens prefilled ──►   │ sign in with GitHub
+   │                     (no login,      new-album form      │ (official Sveltia
+   │                      no writes)                         │  authenticator)
+   │                                                         ▼ save
    │                  ┌──────────────────────────────────────┐
    │                  │ GitHub repo: Markdown + cover images │
    │                  └──────────────────────────────────────┘
    │                          │ push to main
    │                          ▼
-   │                  GitHub Actions: astro build (~1 min)
+   │                  GitHub Actions: enrich new albums from MusicBrainz
+   │                  (tracklist, cover) → astro build (~1–2 min)
    │                          ▼
    └──────────────────  GitHub Pages
 ```
@@ -49,9 +54,9 @@ What each piece used to need a server for, and what replaces it:
 | Need | Old plan | Now |
 |---|---|---|
 | Album lookup | Worker proxying Discogs (secret token) | Browser calls **MusicBrainz** directly. It's keyless and allows cross-origin requests |
-| Cover images | Worker downloads from Discogs | Browser fetches from **Cover Art Archive** (keyless, cross-origin OK) and commits it |
-| CMS login | OAuth helper Worker | Sveltia's **personal access token** sign-in. No OAuth app, no server |
-| Saving a new CD | Worker | Browser commits via the GitHub API with the same token |
+| Tracklist + cover | Worker downloads from Discogs | A **GitHub Action** fetches them from MusicBrainz / **Cover Art Archive** after save and commits them |
+| CMS login | OAuth helper Worker | **GitHub sign-in** per person, via Sveltia's official authenticator, deployed unmodified |
+| Saving a new CD | Worker | `/add` hands off to Sveltia's prefilled new-album form; Sveltia saves |
 | Hosting + rebuild | Cloudflare Pages | **GitHub Actions → GitHub Pages** |
 | Gift claims | Worker + D1 | Dropped: family coordinates in their own chat |
 
@@ -81,7 +86,7 @@ Covers live in `src/assets/covers/<slug>.jpg` (not `public/`), so Astro's
 | `coverCredit` | enum | `cover-art-archive` \| `own-photo` \| `other` |
 | `status` | enum | `collection` \| `wishlist` |
 | `owner` | enum | `arthur` \| `marlou` \| `shared` (default `shared`) |
-| `addedBy` | enum | `arthur` \| `marlou`, from the device's "who's this?" choice |
+| `addedBy` | enum | `arthur` \| `marlou`, set by the enrichment Action from the commit author |
 | `addedAt` | date | Set automatically |
 | `acquiredAt` | date, optional | Set when a wishlist item becomes collection ("got it") |
 | `note` | string, optional | Short personal text, max ~280 chars |
@@ -109,23 +114,26 @@ The build also emits `/albums.json` (slug, ids and status for every album).
 
 ## 5. Adding and editing
 
-### Logins without a second GitHub account
+### Sign-in: GitHub's own login, nothing homebrewed
 
-Sveltia CMS talks to GitHub straight from the browser, and supports signing in
-with a **personal access token** instead of OAuth, so no auth server is needed.
-
-- Arthur creates one fine-grained token, limited to **this repo only**, with
-  Contents read/write. That's all it can touch.
-- Arthur signs in on his own phone, then uses Sveltia's **QR-code login** to
-  sign Marlou's phone in with the same session. Marlou never creates an
-  account.
-- `/add` reuses that sign-in (same site, same browser storage), so there's
-  nothing extra to set up.
-- Each phone picks "Who's this? Arthur / Marlou" once, so `addedBy` and the
-  site show the right person. In git history every commit is Arthur's, but
-  nobody sees that on the site.
-- If a phone is lost, revoking the token on GitHub cuts it off; Arthur makes a
-  new one and signs in again.
+- Arthur and Marlou each have a **GitHub account with 2FA** (or a passkey),
+  and both are collaborators on the repo. GitHub only accepts changes from
+  repo collaborators, so that is the real access control.
+- `/admin` uses Sveltia's standard **"Sign in with GitHub"** button. The
+  OAuth code exchange (which needs a client secret GitHub won't let a browser
+  hold) goes through the **official Sveltia CMS Authenticator**, deployed
+  unmodified on a free Cloudflare Worker. It's stateless, stores nothing, and
+  we write none of its code. It's the one piece not hosted on GitHub; if it
+  ever goes away, only sign-in pauses until it's redeployed elsewhere (the
+  site keeps working).
+- After sign-in, Sveltia keeps GitHub's access token in the browser, as every
+  git-based CMS does. Nothing of ours ever sees or stores it.
+- **Lost phone or leaked session:** revoke the Disckee OAuth app in that
+  person's GitHub settings (Settings → Applications), or remove them as a
+  collaborator. Access stops immediately; nothing on the site changes.
+- **Who added what:** the commit is made by that person's own GitHub
+  account, so there's no "who's this?" step. The enrichment Action sets
+  `addedBy` from the commit author.
 
 ### Why not a custom Sveltia widget
 
@@ -134,6 +142,9 @@ value, not other fields, so a scan widget can't fill title, artist, tracklist
 and cover. Scanning therefore lives on its own page.
 
 ### `/add`: the scanner page (≤4 taps)
+
+`/add` has **no login and never writes anything**. It only looks things up
+and hands off to Sveltia, which does the signed-in save.
 
 1. **Open `/add`** (saved to the home screen).
 2. **Scan.** The camera opens immediately. Barcode reading uses the
@@ -145,19 +156,34 @@ and cover. Scanning therefore lives on its own page.
    has several pressings; if there's only one match, it's preselected. If the
    barcode is already in `albums.json`, the page says "You already have
    this".
-4. **Save as Collection / Save to Wishlist.** Two big buttons. The page
-   writes the Markdown file and the cover in **one commit** through the
-   GitHub API.
+4. **Collection / Wishlist → Save.** Tapping one opens Sveltia's new-album
+   form with title, artist, year, status and the MusicBrainz id/barcode
+   already filled in (Sveltia supports prefilling via URL parameters). Tap
+   Save.
 
-The page then shows "Saved. Live in about a minute." It also keeps a local
-list of just-saved items, so scanning the same CD again warns you even
-before the rebuild lands.
+After the save, a GitHub Action fills in the rest (section 5, "Enrichment").
+The site is live in a minute or two. `/add` keeps a local list of
+just-scanned items, so scanning the same CD again warns you before the
+rebuild lands.
 
-Fallbacks, in order: text search (artist + title), then a photo of the cover
-plus a minimal manual form, then the full Sveltia form.
+Fallbacks, in order: text search (artist + title), then the empty Sveltia
+form, where a phone photo can be uploaded as the cover.
 
 MusicBrainz etiquette: at most 1 request per second from each phone, which a
 person scanning CDs never gets near.
+
+### Enrichment (GitHub Action)
+
+Runs on every push to `main`, before the build:
+
+- For each album with `ids.musicbrainz` but no tracklist or cover, fetch the
+  release from MusicBrainz and the 500px front cover from Cover Art Archive.
+- Fill in tracklist, label and genres, save the cover to
+  `src/assets/covers/`, and set `addedBy` from the commit author's GitHub
+  login (`arthur` / `marlou` mapping in config).
+- Commit with the workflow's built-in, per-run `GITHUB_TOKEN` (GitHub's own,
+  scoped to this repo, expires after the run), then build and deploy in the
+  same workflow.
 
 ### `/admin`: Sveltia CMS
 
@@ -185,22 +211,24 @@ Each phase ships something usable.
 1. **Foundation**: Astro project, content schema, sample albums, collection
    grid, album page, base styling (light/dark), GitHub Actions build and
    deploy to Pages.
-2. **Editing**: Sveltia at `/admin` with token sign-in, schema-sync check,
-   QR login to a second phone, "who's this?" device choice.
-3. **`/add`**: scanner, MusicBrainz lookup, candidate picker, cover fetch,
-   one-commit save, duplicate check, fallbacks.
+2. **Editing**: Sveltia at `/admin` with GitHub sign-in via the official
+   authenticator, both accounts as collaborators, schema-sync check.
+3. **`/add`**: scanner, MusicBrainz lookup, candidate picker, prefilled
+   hand-off to Sveltia, enrichment Action, duplicate check, fallbacks.
 4. **Wishlist**: wishlist page, share links, "got it" flow.
 5. **Polish**: filters and search, recently added, stats (per artist, decade,
    genre, owner), random pick, favourites shelf, PWA manifest.
 
 ## 8. Decisions
 
-1. **Hosting**: GitHub Pages via GitHub Actions. No Cloudflare, no Worker.
-2. **Metadata**: MusicBrainz + Cover Art Archive only, called from the
-   browser. Discogs dropped (needs a secret token; terms forbid long-term
-   storage).
-3. **Logins**: one fine-grained token from Arthur, shared to Marlou's phone
-   by QR code. Marlou doesn't need a GitHub account.
+1. **Hosting**: GitHub Pages via GitHub Actions.
+2. **Metadata**: MusicBrainz + Cover Art Archive only. Lookups from the
+   browser in `/add`, tracklist and cover from the enrichment Action. Discogs
+   dropped (needs a secret token; terms forbid long-term storage).
+3. **Logins**: no homebrew auth. Each person signs in with their own GitHub
+   account (2FA) through Sveltia's official authenticator. Marlou creates a
+   GitHub account. (Pending Arthur's pick; alternatives were Pages CMS or
+   Netlify as the OAuth relay.)
 4. **Gift claims**: none online; family coordinates in their own chat.
 5. **Site language**: English.
 6. **Owner names**: Arthur and Marlou.
