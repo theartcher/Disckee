@@ -17,8 +17,8 @@ export default function CoverImage({ cover, alt, sizes, eager, radius = 0 }: Pro
   if (!cover) {
     return (
       <div
-        role="img"
-        aria-label={`No cover yet for ${alt}`}
+        // Decorative: the album's title is always shown next to it.
+        aria-hidden="true"
         style={{
           ...box,
           display: 'grid',

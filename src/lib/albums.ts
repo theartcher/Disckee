@@ -13,7 +13,7 @@ export const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 /** Albums with the given status, newest first. */
 export async function albumsByStatus(status: Section) {
   const albums = await getCollection('albums', ({ data }) => data.status === status);
-  return albums.sort((a, b) => b.data.addedAt.valueOf() - a.data.addedAt.valueOf());
+  return albums.toSorted((a, b) => b.data.addedAt.valueOf() - a.data.addedAt.valueOf());
 }
 
 export const formatDate = (date: Date) =>
@@ -92,5 +92,5 @@ export function groupByDisc(tracks: Album['data']['tracklist']) {
     list.push({ ...track, position: match ? match[2] : track.position });
     discs.set(disc, list);
   }
-  return [...discs.entries()].map(([disc, tracks]) => ({ disc, tracks }));
+  return [...discs.entries()].map(([disc, discTracks]) => ({ disc, tracks: discTracks }));
 }

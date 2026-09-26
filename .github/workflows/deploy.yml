@@ -1,4 +1,4 @@
-name: Build and deploy
+name: CI and deploy
 
 on:
   push:
@@ -13,7 +13,30 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# typecheck, lint and build are the required checks for merging into main.
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -23,7 +46,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run check
       - run: npm run build
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request'
@@ -32,7 +54,7 @@ jobs:
 
   deploy:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: build
+    needs: [typecheck, lint, build]
     runs-on: ubuntu-latest
     permissions:
       pages: write
