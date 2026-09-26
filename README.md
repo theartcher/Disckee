@@ -9,10 +9,7 @@ and quietly claim wishlist items as gifts.
 
 Every change is a commit to `main`; the site rebuilds in about a minute.
 
-Stack: Astro (static) · Sveltia CMS · one Cloudflare Worker (site, lookup API,
-gift claims in D1) · MusicBrainz / Cover Art Archive, with Discogs as fallback.
+Stack: Astro (static) on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Art
+Archive, called straight from the browser. No servers.
 
 See [docs/PLAN.md](docs/PLAN.md) for the full plan and the reasoning behind it.
-
-This application uses Discogs' API but is not affiliated with, sponsored or
-endorsed by Discogs.
