@@ -4,9 +4,9 @@ import { people } from './album-schema';
 /**
  * Where the official Sveltia CMS Authenticator is deployed (docs/SETUP.md).
  * It does the GitHub OAuth code exchange; we run none of its code ourselves.
- * Leave empty until it is deployed: /admin then explains that sign-in isn't set up.
+ * If this is empty, /admin explains that sign-in isn't set up.
  */
-export const authUrl = '';
+export const authUrl = 'https://sveltia-cms-auth.jorisplayz.workers.dev';
 
 const personOptions = people.map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }));
 
