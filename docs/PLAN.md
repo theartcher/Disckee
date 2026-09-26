@@ -93,8 +93,9 @@ Covers live in `src/assets/covers/<slug>.jpg` (not `public/`), so Astro's
 | `favorite` | boolean | Optional, drives a "favourites" shelf later |
 | `ids` | `{ musicbrainz?, barcode? }` | Traceability + duplicate detection |
 
-The schema is defined once with Zod in `src/content.config.ts`, and the
-Sveltia config mirrors it. A CI check fails the build if the two drift apart.
+The schema is defined once with Zod in `src/lib/album-schema.ts`, and the
+Sveltia config (`src/lib/cms.ts`) mirrors it. The build fails if the two
+drift apart.
 
 The build also emits `/albums.json` (slug, ids and status for every album).
 `/add` uses it to spot duplicates.
