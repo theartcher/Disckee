@@ -75,7 +75,7 @@ function Frame({
             selectedKeys={[section]}
             style={{ flex: 1, minWidth: 0, borderBottom: 'none', background: 'transparent' }}
             items={[
-              { key: 'collection', label: <a href={`${baseUrl}/cds/`}>Collection</a> },
+              { key: 'collection', label: <a href={`${baseUrl}/collection/`}>Collection</a> },
               { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
             ]}
           />

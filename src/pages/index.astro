@@ -12,12 +12,11 @@ const covers = async (albums: Album[]) =>
 const owned = (owner: Album['data']['owner']) => collection.filter((album) => album.data.owner === owner);
 
 const allTiles: Tile[] = [
-  { href: `${baseUrl}/cds/`, title: 'All CDs', caption: plural(collection.length, 'CD'), covers: await covers(collection) },
-  { href: `${baseUrl}/cds/?owner=arthur`, title: "Arthur's CDs", caption: plural(owned('arthur').length, 'CD'), covers: await covers(owned('arthur')) },
-  { href: `${baseUrl}/cds/?owner=marlou`, title: "Marlou's CDs", caption: plural(owned('marlou').length, 'CD'), covers: await covers(owned('marlou')) },
-  { href: `${baseUrl}/cds/?owner=shared`, title: 'Shared CDs', caption: plural(owned('shared').length, 'CD'), covers: await covers(owned('shared')) },
+  { href: `${baseUrl}/collection/`, title: 'Collection', caption: plural(collection.length, 'CD'), covers: await covers(collection) },
+  { href: `${baseUrl}/collection/?owner=arthur`, title: "Arthur's CDs", caption: plural(owned('arthur').length, 'CD'), covers: await covers(owned('arthur')) },
+  { href: `${baseUrl}/collection/?owner=marlou`, title: "Marlou's CDs", caption: plural(owned('marlou').length, 'CD'), covers: await covers(owned('marlou')) },
+  { href: `${baseUrl}/collection/?owner=shared`, title: 'Shared CDs', caption: plural(owned('shared').length, 'CD'), covers: await covers(owned('shared')) },
   { href: `${baseUrl}/wishlist/`, title: 'Wishlist', caption: plural(wishlist.length, 'CD'), covers: await covers(wishlist), icon: 'wishlist' },
-  { href: `${baseUrl}/manage/`, title: "Owners' panel", caption: 'Add, edit and suggestions', covers: [], icon: 'manage' },
 ];
 // An owner's tile with no CDs yet would be an empty square.
 const tiles = allTiles.filter((tile) => tile.caption !== '0 CDs' || tile.icon);

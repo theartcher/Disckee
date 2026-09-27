@@ -1,5 +1,6 @@
 import { Card, Col, Row, Typography, theme } from 'antd';
 import { CustomerServiceOutlined, HeartOutlined, SettingOutlined } from '@ant-design/icons';
+import { ToolCards, ownerTools } from './ManagePage';
 import Shell from './Shell';
 import type { CoverImage } from '../lib/albums';
 
@@ -9,10 +10,10 @@ export interface Tile {
   caption: string;
   /** Up to four covers, shown as a 2×2 mosaic. */
   covers: CoverImage[];
-  icon?: 'wishlist' | 'manage';
+  icon?: 'wishlist';
 }
 
-const icons = { wishlist: <HeartOutlined />, manage: <SettingOutlined /> };
+const icons = { wishlist: <HeartOutlined /> };
 
 function Mosaic({ tile }: { tile: Tile }) {
   const { token } = theme.useToken();
@@ -66,6 +67,17 @@ export default function HomePage({ baseUrl, tiles }: { baseUrl: string; tiles: T
           </Col>
         ))}
       </Row>
+
+      <Typography.Title level={4} style={{ marginTop: 32 }}>
+        For Arthur & Marlou
+      </Typography.Title>
+      <ToolCards
+        tiles
+        tools={[
+          ...ownerTools(baseUrl),
+          { href: `${baseUrl}/manage/`, icon: <SettingOutlined />, title: "Owners' panel", description: 'Every tool on one page.' },
+        ]}
+      />
     </Shell>
   );
 }
