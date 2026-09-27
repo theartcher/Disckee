@@ -3,8 +3,10 @@ import 'antd/dist/reset.css';
 
 interface Props {
   title?: string;
+  /** Which home-screen app this page installs as: the site, or /add on its own. */
+  app?: 'site' | 'add';
 }
-const { title } = Astro.props;
+const { title, app = 'site' } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
@@ -15,6 +17,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
+    <link rel="manifest" href={`${base}/${app === 'add' ? 'add' : 'manifest'}.webmanifest`} />
+    <link rel="apple-touch-icon" href={`${base}/icons/apple-touch-icon.png`} />
+    <meta name="apple-mobile-web-app-title" content={app === 'add' ? 'Add CD' : 'Disckee'} />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
     <title>{title ? `${title} · Disckee` : 'Disckee'}</title>
     <script is:inline>
       // Pick the theme before the page renders so it doesn't flash white in dark mode.
