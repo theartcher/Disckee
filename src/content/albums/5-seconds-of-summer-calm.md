@@ -11,7 +11,7 @@ genres:
   - pop rock
 owner: marlou
 favorite: false
-cover: https://i.discogs.com/5zKP7C8Jzm1lFWLLxoC1CLUg9HYoOhfMA8usiRG7ziI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1MDAz/MzQ3LTE1ODUzNzk3/MzQtOTU0Ny5qcGVn.jpeg
+cover: ../../assets/covers/5-seconds-of-summer-calm.jpg
 tracklist:
   - position: '1'
     title: Red Desert
@@ -62,4 +62,5 @@ musicbrainzId: b373c3e9-ec47-4d51-a94e-1a4e5cc4ce57
 barcode: '602508748172'
 addedBy: marlou
 addedAt: 2026-09-27
+coverCredit: cover-art-archive
 ---

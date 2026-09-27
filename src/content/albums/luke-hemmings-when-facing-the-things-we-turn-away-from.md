@@ -8,10 +8,48 @@ genres:
   - pop
 owner: marlou
 favorite: false
-cover: https://i.discogs.com/xgaAOVdP8ptXDucJaz4IT3vyusJhl-uDDq07fnuWpgI/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE5ODc1/NDkwLTE2MjkwODY2/NjQtMzM0Ny5qcGVn.jpeg
-coverCredit: own-photo
+cover: ../../assets/covers/luke-hemmings-when-facing-the-things-we-turn-away-from.jpg
+coverCredit: cover-art-archive
 musicbrainzId: 863f6e03-9af7-48a8-b5ee-01f6ecf270fe
 barcode: '0194399310526'
 addedBy: arthur
 addedAt: 2026-09-27
+tracklist:
+  - position: "1"
+    title: Starting Line
+    duration: 4:30
+  - position: "2"
+    title: Saigon
+    duration: 3:41
+  - position: "3"
+    title: Motion
+    duration: 3:29
+  - position: "4"
+    title: Place in Me
+    duration: 3:07
+  - position: "5"
+    title: Baby Blue
+    duration: 3:43
+  - position: "6"
+    title: Repeat
+    duration: 3:32
+  - position: "7"
+    title: Mum
+    duration: 3:50
+  - position: "8"
+    title: Slip Away
+    duration: 3:52
+  - position: "9"
+    title: Diamonds
+    duration: 3:58
+  - position: "10"
+    title: A Beautiful Dream
+    duration: 3:11
+  - position: "11"
+    title: Bloodline
+    duration: 2:04
+  - position: "12"
+    title: Comedown
+    duration: 4:38
+label: Sony Music
 ---
