@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Button, ConfigProvider, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
+import { Button, ConfigProvider, Flex, Grid, Layout, Menu, Tooltip, Typography, theme } from 'antd';
 import { MoonOutlined, SettingOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
@@ -52,6 +52,7 @@ function Frame({
   children,
 }: Props & { mode: Mode; onToggle: () => void }) {
   const { token } = theme.useToken();
+  const screens = Grid.useBreakpoint();
   const owners = section === 'add' || section === 'suggestions' || section === 'manage';
 
   return (
@@ -67,18 +68,28 @@ function Frame({
         }}
       >
         <Flex align="center" gap={8} style={{ maxWidth: 1100, height: '100%', margin: '0 auto' }}>
-          <Typography.Link href={`${baseUrl}/`} strong style={{ fontSize: 18, color: token.colorText, marginRight: 8 }}>
-            Disckee
+          {/* On a phone the app icon stands in for the name, so the whole nav fits. */}
+          <Typography.Link
+            href={`${baseUrl}/`}
+            strong
+            aria-label="Disckee home"
+            style={{ display: 'flex', fontSize: 18, color: token.colorText, marginRight: screens.sm ? 8 : 0 }}
+          >
+            {screens.sm ? 'Disckee' : <img src={`${baseUrl}/icons/icon-192.png`} alt="" width={28} height={28} style={{ borderRadius: 6 }} />}
           </Typography.Link>
-          <Menu
-            mode="horizontal"
-            selectedKeys={[section]}
-            style={{ flex: 1, minWidth: 0, borderBottom: 'none', background: 'transparent' }}
-            items={[
-              { key: 'collection', label: <a href={`${baseUrl}/collection/`}>Collection</a> },
-              { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
-            ]}
-          />
+          <ConfigProvider theme={{ components: { Menu: { itemPaddingInline: screens.sm ? 20 : 10 } } }}>
+            <Menu
+              mode="horizontal"
+              disabledOverflow={!screens.sm}
+              selectedKeys={[section]}
+              style={{ flex: 1, minWidth: 0, borderBottom: 'none', background: 'transparent' }}
+              items={[
+                { key: 'collection', label: <a href={`${baseUrl}/collection/`}>Collection</a> },
+                { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
+                { key: 'stats', label: <a href={`${baseUrl}/stats/`}>Stats</a> },
+              ]}
+            />
+          </ConfigProvider>
           {/* The owners' tools live on one panel page, so the nav still fits on a phone. */}
           <Tooltip title="Owners' panel">
             <Button

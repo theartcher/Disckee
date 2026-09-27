@@ -24,7 +24,17 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /** A small column chart: one bar per item, tallest = full height. */
-function Columns({ items, label, tip }: { items: Count[]; label: (item: Count) => ReactNode; tip: (item: Count) => string }) {
+function Columns({
+  items,
+  label,
+  tip,
+  href,
+}: {
+  items: Count[];
+  label: (item: Count) => ReactNode;
+  tip: (item: Count) => string;
+  href?: (item: Count) => string;
+}) {
   const { token } = theme.useToken();
   const max = Math.max(1, ...items.map((item) => item.count));
   return (
@@ -32,7 +42,13 @@ function Columns({ items, label, tip }: { items: Count[]; label: (item: Count) =
       <Flex gap={6} align="flex-end" style={{ height: 160, minWidth: items.length * 32 }}>
         {items.map((item) => (
           <Tooltip key={item.label} title={tip(item)}>
-            <Flex vertical align="center" justify="flex-end" style={{ flex: 1, minWidth: 26, maxWidth: 64, height: '100%' }}>
+            <Flex
+              vertical
+              align="center"
+              justify="flex-end"
+              {...(href && { component: 'a', href: href(item) })}
+              style={{ flex: 1, minWidth: 26, maxWidth: 64, height: '100%' }}
+            >
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                 {item.count || ''}
               </Typography.Text>
@@ -62,7 +78,7 @@ function Columns({ items, label, tip }: { items: Count[]; label: (item: Count) =
 
 export default function StatsPage({ baseUrl, stats }: Props) {
   const { token } = theme.useToken();
-  const search = (text: string) => `${baseUrl}/collection/?q=${encodeURIComponent(text)}`;
+  const filter = (key: string, value: string) => `${baseUrl}/collection/?${key}=${encodeURIComponent(value)}`;
   const owners = [
     { key: 'marlou', name: 'Marlou', count: stats.owners.marlou, color: token.magenta },
     { key: 'arthur', name: 'Arthur', count: stats.owners.arthur, color: token.blue },
@@ -151,7 +167,7 @@ export default function StatsPage({ baseUrl, stats }: Props) {
           <Section title="Most-collected artists">
             <Flex vertical gap={4}>
               {stats.topArtists.map((artist) => (
-                <a key={artist.label} href={search(artist.label)} style={{ color: 'inherit' }}>
+                <a key={artist.label} href={filter('artist', artist.label)} style={{ color: 'inherit' }}>
                   <Typography.Text ellipsis style={{ display: 'block' }}>
                     {artist.label}
                   </Typography.Text>
@@ -164,7 +180,12 @@ export default function StatsPage({ baseUrl, stats }: Props) {
 
         <Col xs={24} md={12}>
           <Section title="Released in the…">
-            <Columns items={stats.decades} label={(item) => `’${item.label.slice(2)}`} tip={(item) => `${item.label}: ${plural(item.count, 'CD')}`} />
+            <Columns
+              items={stats.decades}
+              label={(item) => `’${item.label.slice(2)}`}
+              tip={(item) => `${item.label}: ${plural(item.count, 'CD')}`}
+              href={(item) => filter('decade', item.label)}
+            />
           </Section>
         </Col>
 
@@ -183,7 +204,7 @@ export default function StatsPage({ baseUrl, stats }: Props) {
             <Section title="Genres">
               <Flex wrap gap={8} align="center">
                 {stats.genres.map((genre) => (
-                  <a key={genre.label} href={search(genre.label)}>
+                  <a key={genre.label} href={filter('genre', genre.label)}>
                     <Tag
                       color={genre.count === topGenre ? 'blue' : undefined}
                       style={{ margin: 0, fontSize: 12 + Math.round((genre.count / topGenre) * 10), lineHeight: 1.6, paddingInline: 10 }}

@@ -64,6 +64,19 @@ type Sort = keyof typeof sorts;
 type View = 'grid' | 'list';
 
 const isSort = (value: unknown): value is Sort => typeof value === 'string' && value in sorts;
+const decadeOf = (year?: number) => (year ? `${Math.floor(year / 10) * 10}s` : undefined);
+const same = (a = '', b = '') => a.toLowerCase() === b.toLowerCase();
+
+/** The choices for a filter, most common first, without case duplicates ("5 Seconds Of Summer"). */
+function choices(values: string[]) {
+  const counts = new Map<string, { value: string; count: number }>();
+  for (const value of values) {
+    const entry = counts.get(value.toLowerCase()) ?? { value, count: 0 };
+    entry.count++;
+    counts.set(value.toLowerCase(), entry);
+  }
+  return [...counts.values()].toSorted((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+}
 const isOwner = (value: unknown): value is Owner => owners.some((owner) => owner.value === value);
 
 /** The search, owner, sort and view, kept in the URL so a view can be shared. */
@@ -72,6 +85,9 @@ function useBrowseState() {
   const [query, setQuery] = useState(params.get('q') ?? '');
   const [owner, setOwner] = useState<Owner>(isOwner(params.get('owner')) ? (params.get('owner') as Owner) : 'all');
   const [sort, setSort] = useState<Sort>(isSort(params.get('sort')) ? (params.get('sort') as Sort) : 'added');
+  const [artist, setArtist] = useState(params.get('artist') ?? undefined);
+  const [genre, setGenre] = useState(params.get('genre') ?? undefined);
+  const [decade, setDecade] = useState(params.get('decade') ?? undefined);
   const [view, setView] = useState<View>(() => {
     const fromUrl = params.get('view');
     if (fromUrl === 'grid' || fromUrl === 'list') return fromUrl;
@@ -86,6 +102,9 @@ function useBrowseState() {
     const next = new URLSearchParams();
     if (query.trim()) next.set('q', query.trim());
     if (owner !== 'all') next.set('owner', owner);
+    if (artist) next.set('artist', artist);
+    if (genre) next.set('genre', genre);
+    if (decade) next.set('decade', decade);
     if (sort !== 'added') next.set('sort', sort);
     if (view !== 'grid') next.set('view', view);
     const search = next.toString();
@@ -93,13 +112,23 @@ function useBrowseState() {
     try {
       localStorage.setItem('view', view);
     } catch {}
-  }, [query, owner, sort, view]);
+  }, [query, owner, artist, genre, decade, sort, view]);
 
-  return { query, setQuery, owner, setOwner, sort, setSort, view, setView };
+  return { query, setQuery, owner, setOwner, artist, setArtist, genre, setGenre, decade, setDecade, sort, setSort, view, setView };
 }
 
 export default function AlbumListPage({ baseUrl, section, title, subtitle, albums, share, empty, home }: Props) {
-  const { query, setQuery, owner, setOwner, sort, setSort, view, setView } = useBrowseState();
+  const { query, setQuery, owner, setOwner, artist, setArtist, genre, setGenre, decade, setDecade, sort, setSort, view, setView } =
+    useBrowseState();
+
+  const filters = useMemo(
+    () => ({
+      artists: choices(albums.map((album) => album.artist)),
+      genres: choices(albums.flatMap((album) => album.genres)),
+      decades: choices(albums.flatMap((album) => decadeOf(album.year) ?? [])).toSorted((a, b) => b.value.localeCompare(a.value)),
+    }),
+    [albums],
+  );
 
   const fuse = useMemo(
     () =>
@@ -119,12 +148,18 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
 
   const shown = useMemo(() => {
     const found = query.trim() ? fuse.search(query.trim()).map((result) => result.item) : albums;
-    const mine = owner === 'all' ? found : found.filter((album) => album.owner === owner);
+    const mine = found.filter(
+      (album) =>
+        (owner === 'all' || album.owner === owner) &&
+        (!artist || same(album.artist, artist)) &&
+        (!genre || album.genres.some((g) => same(g, genre))) &&
+        (!decade || decadeOf(album.year) === decade),
+    );
     // While searching with the default order, the best matches come first.
     return query.trim() && sort === 'added' ? mine : mine.toSorted(sorts[sort].compare);
-  }, [albums, fuse, query, owner, sort]);
+  }, [albums, fuse, query, owner, artist, genre, decade, sort]);
 
-  const filtered = query.trim() !== '' || owner !== 'all';
+  const filtered = query.trim() !== '' || owner !== 'all' || !!artist || !!genre || !!decade;
   const ownerTitle = owner === 'all' ? undefined : ownerTitles[section][owner];
   // Sharing one person's wishlist shares just their part of it.
   const pageShare = share && ownerTitle ? { ...share, href: `${share.href}?owner=${owner}`, title: ownerTitle } : share;
@@ -190,6 +225,29 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
               ]}
               style={{ marginLeft: 'auto' }}
             />
+          </Flex>
+          <Flex gap={8}>
+            {(
+              [
+                { label: 'Artist', value: artist, set: setArtist, options: filters.artists },
+                { label: 'Genre', value: genre, set: setGenre, options: filters.genres },
+                { label: 'Decade', value: decade, set: setDecade, options: filters.decades },
+              ] as const
+            ).map((filter) => (
+              <Select<string>
+                key={filter.label}
+                allowClear
+                showSearch
+                placeholder={filter.label}
+                aria-label={filter.label}
+                value={filter.value}
+                onChange={(value) => filter.set(value)}
+                options={filter.options.map(({ value, count }) => ({ value, label: `${value} (${count})` }))}
+                labelRender={({ value }) => value}
+                popupMatchSelectWidth={false}
+                style={{ flex: 1, minWidth: 0 }}
+              />
+            ))}
           </Flex>
           {filtered && (
             <Typography.Text type="secondary">
