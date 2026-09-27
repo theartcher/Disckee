@@ -467,7 +467,7 @@ function TextSearch({
       >
         <Input size="large" autoComplete="off" />
       </Form.Item>
-      <Button htmlType="submit" size="large" icon={<SearchOutlined />}>
+      <Button type="primary" htmlType="submit" size="large" block icon={<SearchOutlined />}>
         Search MusicBrainz
       </Button>
     </Form>
