@@ -112,6 +112,9 @@ export const cmsConfig = (siteUrl: string): CmsConfig => ({
     base_url: authUrl,
     // GitHub sign-in only: no pasting personal access tokens into the browser.
     auth_methods: ['oauth'],
+    // Saves don't deploy on their own ("[skip ci]"); the Publish Changes
+    // button deploys everything saved so far (repository_dispatch in deploy.yml).
+    skip_ci: true,
     commit_messages: {
       create: 'Add {{collection}} “{{slug}}”',
       update: 'Update {{collection}} “{{slug}}”',
