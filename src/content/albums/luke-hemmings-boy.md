@@ -3,7 +3,7 @@ title: boy
 artist: Luke Hemmings
 status: wishlist
 year: 2024
-owner: shared
+owner: marlou
 favorite: false
 cover: ../../assets/covers/luke-hemmings-boy.jpg
 coverCredit: cover-art-archive
