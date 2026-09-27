@@ -5,6 +5,8 @@ import Fuse from 'fuse.js';
 import Shell from './Shell';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
+import Shelf from './Shelf';
+import RandomPick from './RandomPick';
 import type { AlbumCard, Section } from '../lib/albums';
 
 interface Props {
@@ -16,6 +18,19 @@ interface Props {
   /** Adds share buttons for the page and for each album. */
   share?: { href: string; title: string; text: string };
   empty?: string;
+  /** The home page: adds the "Recently added" and favourites shelves and a random pick. */
+  home?: boolean;
+}
+
+const names = { arthur: 'Arthur', marlou: 'Marlou' } as const;
+const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+/** "added by Marlou, 3 days ago". Worked out in the browser, so it doesn't go stale between builds. */
+function addedCaption(album: AlbumCard) {
+  const days = Math.round((Date.parse(album.addedAt) - Date.now()) / 86_400_000);
+  const when =
+    days > -7 ? relative.format(Math.min(days, 0), 'day') : days > -60 ? relative.format(Math.round(days / 7), 'week') : relative.format(Math.round(days / 30), 'month');
+  return album.addedBy ? `${names[album.addedBy]}, ${when}` : when[0].toUpperCase() + when.slice(1);
 }
 
 const owners = [
@@ -79,7 +94,7 @@ function useBrowseState() {
   return { query, setQuery, owner, setOwner, sort, setSort, view, setView };
 }
 
-export default function AlbumListPage({ baseUrl, section, title, subtitle, albums, share, empty }: Props) {
+export default function AlbumListPage({ baseUrl, section, title, subtitle, albums, share, empty, home }: Props) {
   const { query, setQuery, owner, setOwner, sort, setSort, view, setView } = useBrowseState();
 
   const fuse = useMemo(
@@ -106,6 +121,8 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
   }, [albums, fuse, query, owner, sort]);
 
   const filtered = query.trim() !== '' || owner !== 'all';
+  const recent = useMemo(() => albums.toSorted(sorts.added.compare).slice(0, 10), [albums]);
+  const favorites = useMemo(() => albums.filter((album) => album.favorite), [albums]);
   const shareItem = (album: AlbumCard) =>
     share && (
       <ShareButton
@@ -128,8 +145,16 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
         {subtitle}
       </Typography.Paragraph>
 
+      {home && !filtered && recent.length > 0 && <Shelf title="Recently added" albums={recent} caption={addedCaption} />}
+      {home && !filtered && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
+
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
+          {home && (
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              All albums
+            </Typography.Title>
+          )}
           <Input
             allowClear
             size="large"
@@ -148,6 +173,7 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
               options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
               style={{ minWidth: 190 }}
             />
+            {home && <RandomPick albums={shown} />}
             <Segmented<View>
               value={view}
               onChange={setView}
