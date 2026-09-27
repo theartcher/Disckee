@@ -24,7 +24,12 @@ const enabled = Boolean(authUrl) || import.meta.env.DEV;
         z-index: 1000;
         left: 12px;
         bottom: calc(12px + env(safe-area-inset-bottom));
+        display: flex;
+        gap: 8px;
+      }
+      #back a {
         padding: 8px 14px;
+        border: 1px solid #1677ff;
         border-radius: 999px;
         font: 500 14px/1.2 system-ui, sans-serif;
         text-decoration: none;
@@ -32,16 +37,24 @@ const enabled = Boolean(authUrl) || import.meta.env.DEV;
         background: #1677ff;
         box-shadow: 0 2px 8px rgb(0 0 0 / 25%);
       }
+      #back a.secondary {
+        border-color: #d9d9d9;
+        color: rgb(0 0 0 / 88%);
+        background: #fff;
+      }
     </style>
   </head>
   <body>
     {
       enabled ? (
         <>
-          {/* Back to /add, for scanning the next CD after a save. */}
-          <a id="back" href={`${base}/add/`}>
-            ← Back to scan
-          </a>
+          {/* Back to the site, or to /add for scanning the next CD after a save. */}
+          <nav id="back">
+            <a href={`${base}/`}>← Back to home</a>
+            <a class="secondary" href={`${base}/add/`}>
+              Back to scan
+            </a>
+          </nav>
           <script>
           import { init } from '@sveltia/cms';
           import { cmsConfig } from '../../lib/cms';
