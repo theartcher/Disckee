@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import SuggestionsPage from '../components/SuggestionsPage';
+import { baseUrl } from '../lib/albums';
+import { loadSuggestions } from '../lib/suggestions';
+
+const suggestions = await loadSuggestions();
+---
+
+<Base title="Suggestions">
+  <SuggestionsPage client:only="react" baseUrl={baseUrl} suggestions={suggestions} />
+</Base>

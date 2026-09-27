@@ -82,6 +82,18 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Fill in album details from MusicBrainz' -m '[skip ci]'
           git push origin HEAD:main || echo "::warning::Couldn't push the album details to main. See docs/SETUP.md section 7."
+      # Ideas for the wishlist (/suggestions) from MusicBrainz and ListenBrainz.
+      # Also runs for pull requests, so changes to it are tried for real. Never
+      # fails the build; lookups are kept between runs so only new ones are made.
+      - uses: actions/cache@v4
+        with:
+          path: .cache
+          key: suggestions-${{ github.run_id }}
+          restore-keys: suggestions-
+      - name: Find wishlist suggestions
+        run: node scripts/suggest.ts
+        timeout-minutes: 5
+        continue-on-error: true
       - run: npm run build
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request'

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, ConfigProvider, Dropdown, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
-import { EditOutlined, MoonOutlined, ScanOutlined, SunOutlined } from '@ant-design/icons';
+import { BulbOutlined, EditOutlined, MoonOutlined, ScanOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
 type Mode = 'light' | 'dark';
@@ -15,7 +15,7 @@ function initialMode(): Mode {
 
 interface Props {
   baseUrl: string;
-  section: Section | 'add';
+  section: Section | 'add' | 'suggestions';
   children: ReactNode;
 }
 
@@ -83,9 +83,10 @@ function Frame({
             trigger={['click']}
             placement="bottomRight"
             menu={{
-              selectedKeys: section === 'add' ? ['add'] : [],
+              selectedKeys: section === 'add' || section === 'suggestions' ? [section] : [],
               items: [
                 { key: 'add', icon: <ScanOutlined />, label: <a href={`${baseUrl}/add/`}>Add a CD</a> },
+                { key: 'suggestions', icon: <BulbOutlined />, label: <a href={`${baseUrl}/suggestions/`}>Suggestions</a> },
                 { key: 'admin', icon: <EditOutlined />, label: <a href={`${baseUrl}/admin/`}>Edit albums</a> },
               ],
             }}
