@@ -73,22 +73,14 @@ export const albumFields: Field[] = [
     ],
   },
   {
-    name: 'ids',
-    label: 'Identifiers',
-    widget: 'object',
+    name: 'musicbrainzId',
+    label: 'MusicBrainz release id',
+    widget: 'string',
     required: false,
-    collapsed: true,
-    fields: [
-      {
-        name: 'musicbrainz',
-        label: 'MusicBrainz release id',
-        widget: 'string',
-        required: false,
-        pattern: ['^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', 'A MusicBrainz release id'],
-      },
-      { name: 'barcode', label: 'Barcode', widget: 'string', required: false, pattern: ['^\\d{8,14}$', '8 to 14 digits'] },
-    ],
+    pattern: ['^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', 'A MusicBrainz release id'],
+    hint: 'Filled in by Add a CD. Tracklist, label, genres and cover are fetched from it on the next publish.',
   },
+  { name: 'barcode', label: 'Barcode', widget: 'string', required: false, pattern: ['^\\d{8,14}$', '8 to 14 digits'] },
   {
     name: 'addedBy',
     label: 'Added by',

@@ -91,13 +91,14 @@ Covers live in `src/assets/covers/<slug>.jpg` (not `public/`), so Astro's
 | `acquiredAt` | date, optional | Set when a wishlist item becomes collection ("got it") |
 | `note` | string, optional | Short personal text, max ~280 chars |
 | `favorite` | boolean | Optional, drives a "favourites" shelf later |
-| `ids` | `{ musicbrainz?, barcode? }` | Traceability + duplicate detection |
+| `musicbrainzId` | string, optional | MusicBrainz release id; drives enrichment and duplicate detection |
+| `barcode` | string, optional | As printed; duplicate detection |
 
 The schema is defined once with Zod in `src/lib/album-schema.ts`, and the
 Sveltia config (`src/lib/cms.ts`) mirrors it. The build fails if the two
 drift apart.
 
-The build also emits `/albums.json` (slug, ids and status for every album).
+The build also emits `/albums.json` (slug, MusicBrainz id, barcode and status for every album).
 `/add` uses it to spot duplicates.
 
 ## 4. Public site
@@ -179,7 +180,7 @@ person scanning CDs never gets near.
 Runs in the build job of every deploy (Publish Changes in `/admin`, or a
 push to `main`), before the site is built:
 
-- For each album with `ids.musicbrainz` but no tracklist or cover, fetch the
+- For each album with a `musicbrainzId` but no tracklist or cover, fetch the
   release from MusicBrainz and the 500px front cover from Cover Art Archive.
 - Fill in tracklist, label and genres, save the cover to
   `src/assets/covers/`, and set `addedBy` from the commit author's GitHub

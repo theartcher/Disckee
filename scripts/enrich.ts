@@ -110,8 +110,8 @@ async function enrich(name: string) {
   const match = text.match(frontmatter);
   if (!match) return false;
   const doc = parseDocument(match[1]);
-  const data = doc.toJS() as Record<string, unknown> & { ids?: { musicbrainz?: string } };
-  const mbid = data.ids?.musicbrainz;
+  const data = doc.toJS() as Record<string, unknown> & { musicbrainzId?: string };
+  const mbid = data.musicbrainzId;
   const filled: string[] = [];
   const fill = (key: string, value: unknown) => {
     if (isEmpty(data[key]) && !isEmpty(value)) {

@@ -12,14 +12,14 @@ export interface Draft {
   coverCredit?: 'own-photo';
 }
 
-/** Sveltia's new-entry form, prefilled through URL parameters (dot notation for nested fields). */
+/** Sveltia's new-entry form, prefilled through URL parameters (top-level fields only). */
 export function newAlbumUrl(baseUrl: string, draft: Draft) {
   const params = new URLSearchParams();
   if (draft.title) params.set('title', draft.title);
   if (draft.artist) params.set('artist', draft.artist);
   params.set('status', draft.status);
-  if (draft.musicbrainz) params.set('ids.musicbrainz', draft.musicbrainz);
-  if (draft.barcode) params.set('ids.barcode', draft.barcode);
+  if (draft.musicbrainz) params.set('musicbrainzId', draft.musicbrainz);
+  if (draft.barcode) params.set('barcode', draft.barcode);
   if (draft.coverCredit) params.set('coverCredit', draft.coverCredit);
   // Sveltia expects %20 rather than + for spaces.
   return `${baseUrl}/admin/#/collections/albums/new?${params.toString().replaceAll('+', '%20')}`;
