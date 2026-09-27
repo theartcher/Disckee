@@ -5,6 +5,14 @@ import { z } from 'astro/zod';
 export const people = ['arthur', 'marlou'] as const;
 
 /**
+ * GitHub accounts of the people above, lowercase. The enrichment Action
+ * (scripts/enrich.ts) sets `addedBy` from the account that saved an album.
+ */
+export const githubLogins: Record<string, (typeof people)[number]> = {
+  theartcher: 'arthur',
+};
+
+/**
  * The album schema. `image` is Astro's image() helper in the content config;
  * the CMS drift check passes a plain string schema instead.
  */

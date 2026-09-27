@@ -4,7 +4,7 @@ Our CD collection and wishlist, as a website. Friends and family can browse it,
 wishlist included, for gift ideas.
 
 - **Browse:** the public site (collection, album pages, wishlist).
-- **Add a CD:** `/add` on your phone. Scan the barcode, pick the release, then save in the prefilled form (signed in with GitHub).
+- **Add a CD:** `/add` on your phone (the pencil menu → Add a CD). Scan the barcode, pick the release, then save in the prefilled form (signed in with GitHub). On the next deploy, the tracklist, label, genres and cover are filled in from MusicBrainz by `scripts/enrich.ts`.
 - **Edit:** `/admin` (Sveltia CMS). Fix details, add notes, mark "got it".
 
 Every save is a commit to `main`. Saves from `/admin` don't go live on their

@@ -66,6 +66,29 @@ A broken save can't take the site down: the deploy only runs when
 2. Settings → Collaborators → **Add people** → her username. She accepts the
    invite from her email.
 3. She opens `/admin`, taps **Sign In with GitHub** and approves Disckee once.
+4. Add her GitHub username (lowercase) to `githubLogins` in
+   `src/lib/album-schema.ts`, so albums she adds get "added by Marlou".
+
+## 7. Let the enrichment step save album details (optional)
+
+After a CD is added from `/add`, each deploy fills in its tracklist, label,
+genres and cover from MusicBrainz (`scripts/enrich.ts`) and commits them to
+`main`. The ruleset with the required checks refuses that push from the
+workflow's own token. A deploy key on the ruleset's bypass list gets through:
+
+1. On your computer: `ssh-keygen -t ed25519 -C disckee-enrich -N "" -f disckee-enrich`
+2. Settings → Deploy keys → **Add deploy key**: title "Enrichment", paste
+   `disckee-enrich.pub`, tick **Allow write access**.
+3. Settings → Secrets and variables → Actions → **New repository secret**:
+   name `ENRICH_DEPLOY_KEY`, value the contents of `disckee-enrich` (the
+   private key). Then delete both files from your computer.
+4. Settings → Rules → Rulesets → the ruleset with the required checks →
+   **Bypass list** → add **Deploy keys**, Always allowed.
+
+The key only works for this repository, lives only in Actions secrets, and
+can be deleted under Deploy keys at any time. Until it's set up, the live site
+still shows the details (each deploy fetches them again), but they aren't
+saved in git and can't be edited in `/admin`; the deploy log shows a warning.
 
 ## Lost phone or leaked session
 
