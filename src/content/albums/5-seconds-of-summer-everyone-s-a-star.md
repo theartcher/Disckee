@@ -9,9 +9,38 @@ genres:
   - pop punk
 owner: shared
 favorite: false
-cover: https://i.discogs.com/NdwHv11fRwW0Q9Z-fKxgNBT9cP0r2C0D1zya6Iq21NI/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM1Njg2/MzYwLTE3NjM0MTM0/ODItODgwMy5qcGVn.jpeg
+cover: ../../assets/covers/5-seconds-of-summer-everyone-s-a-star.jpg
 musicbrainzId: f47e65f5-2316-442b-9c02-bd85ed42102a
 barcode: '602488082426'
 addedBy: arthur
 addedAt: 2026-09-27
+tracklist:
+  - position: "1"
+    title: Everyone’s a Star!
+  - position: "2"
+    title: NOT OK
+  - position: "3"
+    title: Telephone Busy
+  - position: "4"
+    title: Boyband
+  - position: "5"
+    title: No. 1 Obsession
+  - position: "6"
+    title: I’m Scared I’ll Never Sleep Again
+  - position: "7"
+    title: istillfeelthesame
+  - position: "8"
+    title: Ghost
+  - position: "9"
+    title: Sick of Myself
+  - position: "10"
+    title: Evolve
+  - position: "11"
+    title: The Rocks
+  - position: "12"
+    title: Jawbreaker
+  - position: "13"
+    title: Start Over
+label: Republic Records
+coverCredit: cover-art-archive
 ---

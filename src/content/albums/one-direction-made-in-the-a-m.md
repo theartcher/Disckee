@@ -11,7 +11,7 @@ genres:
   - pop rock
 owner: marlou
 favorite: false
-cover: https://i.discogs.com/KAqYkAl91Dw4a0wmp--3u0sFKqfXE65kjYokmQBGSXk/rs:fit/g:sm/q:90/h:534/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc3NDc5/MTAtMTQ0Nzk1NzYw/Mi0xNTUyLmpwZWc.jpeg
+cover: ../../assets/covers/one-direction-made-in-the-a-m.jpg
 tracklist:
   - position: '1'
     title: Hey Angel
@@ -56,4 +56,5 @@ musicbrainzId: f8129229-81f1-417d-817e-99db25c96b4e
 barcode: '888751307926'
 addedBy: marlou
 addedAt: 2026-09-27
+coverCredit: cover-art-archive
 ---

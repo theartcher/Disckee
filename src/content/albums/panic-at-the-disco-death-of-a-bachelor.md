@@ -12,7 +12,7 @@ genres:
   - emo pop
 owner: marlou
 favorite: false
-cover: https://i.discogs.com/o_zkc-ZRql0t7YGUMRly6qW8np_SoheYOWHsq-g6an0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTc5Njk4/NDUtMTQ1OTMxODIy/Ny02MDIxLmpwZWc.jpeg
+cover: ../../assets/covers/panic-at-the-disco-death-of-a-bachelor.jpg
 tracklist:
   - position: '1'
     title: Victorious
@@ -51,4 +51,5 @@ musicbrainzId: f45cf289-cc98-4aba-8bb0-f4b32dfa55fa
 barcode: '075678666735'
 addedBy: marlou
 addedAt: 2026-09-27
+coverCredit: cover-art-archive
 ---
