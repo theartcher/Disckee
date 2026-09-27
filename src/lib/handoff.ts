@@ -9,7 +9,12 @@ export interface Draft {
   status: Status;
   musicbrainz?: string;
   barcode?: string;
-  coverCredit?: 'own-photo';
+  year?: number;
+  genres?: string[];
+  label?: string;
+  /** A Cover Art Archive URL; the deploy downloads it into the repo. */
+  cover?: string;
+  coverCredit?: 'own-photo' | 'cover-art-archive';
 }
 
 /** Sveltia's new-entry form, prefilled through URL parameters (top-level fields only). */
@@ -20,6 +25,11 @@ export function newAlbumUrl(baseUrl: string, draft: Draft) {
   params.set('status', draft.status);
   if (draft.musicbrainz) params.set('musicbrainzId', draft.musicbrainz);
   if (draft.barcode) params.set('barcode', draft.barcode);
+  if (draft.year) params.set('year', String(draft.year));
+  // Sveltia splits list values on commas.
+  if (draft.genres?.length) params.set('genres', draft.genres.map((genre) => genre.replaceAll(',', ' ')).join(','));
+  if (draft.label) params.set('label', draft.label);
+  if (draft.cover) params.set('cover', draft.cover);
   if (draft.coverCredit) params.set('coverCredit', draft.coverCredit);
   // Sveltia expects %20 rather than + for spaces.
   return `${baseUrl}/admin/#/collections/albums/new?${params.toString().replaceAll('+', '%20')}`;

@@ -2,6 +2,8 @@
 // MusicBrainz and Cover Art Archive both send `Access-Control-Allow-Origin: *`,
 // so the page calls them directly: no key, no server of ours.
 
+import { isCdFormat, releaseInclude, type Release } from './release';
+
 const api = 'https://musicbrainz.org/ws/2';
 
 /** What the picker needs to tell pressings apart and hand off to Sveltia. */
@@ -67,10 +69,11 @@ function toCandidate(release: SearchRelease): Candidate {
 
 async function search(query: string, signal?: AbortSignal) {
   const { releases } = await get<{ releases: SearchRelease[] }>(
-    `/release/?query=${encodeURIComponent(query)}&limit=25&fmt=json`,
+    `/release/?query=${encodeURIComponent(query)}&limit=100&fmt=json`,
     signal,
   );
-  return releases.map(toCandidate);
+  // CDs only: the same barcode is often shared by the digital and vinyl releases.
+  return releases.filter((release) => release.media?.some((medium) => isCdFormat(medium.format))).map(toCandidate);
 }
 
 /**
@@ -89,6 +92,10 @@ export function searchText(artist: string, title: string, signal?: AbortSignal) 
   const parts = [title && `release:${quote(title)}`, artist && `artist:${quote(artist)}`].filter(Boolean);
   return search(parts.join(' AND '), signal);
 }
+
+/** Everything about one release that /add prefills: year, genres, label, tracklist, cover. */
+export const lookUpRelease = (id: string, signal?: AbortSignal) =>
+  get<Release>(`/release/${id}?inc=${releaseInclude}&fmt=json`, signal);
 
 export const coverThumbnail = (id: string) => `https://coverartarchive.org/release/${id}/front-250`;
 

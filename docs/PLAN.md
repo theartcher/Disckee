@@ -158,11 +158,13 @@ and hands off to Sveltia, which does the signed-in save.
    has several pressings; if there's only one match, it's preselected. If the
    barcode is already in `albums.json`, the page says "You already have
    this".
-4. **Add → Save.** A "We have it / We want it" switch sets the status. The
-   Add button opens Sveltia's new-album form with title, artist, status and
-   the MusicBrainz id/barcode already filled in (Sveltia supports
-   prefilling via URL parameters). Tap Save. The original year comes from
-   enrichment.
+4. **Add → Save.** A "We have it / We want it" switch sets the status. Only
+   CD releases are listed. Picking one fetches its details, and the Add
+   button opens Sveltia's new-album form with title, artist, status, year
+   (original release), genres, label, the Cover Art Archive cover URL, and
+   the MusicBrainz id and barcode already filled in (Sveltia prefills
+   top-level fields from URL parameters). Tap Save. The tracklist can't be
+   passed that way, so /add shows it and enrichment adds it.
 
 After the save, a GitHub Action fills in the rest (section 5, "Enrichment").
 The site is live in a minute or two. `/add` keeps a local list of
@@ -182,6 +184,8 @@ push to `main`), before the site is built:
 
 - For each album with a `musicbrainzId` but no tracklist or cover, fetch the
   release from MusicBrainz and the 500px front cover from Cover Art Archive.
+  A cover prefilled as a URL is downloaded into the repo (or dropped if it
+  can't be, so the build never breaks on it).
 - Fill in tracklist, label and genres, save the cover to
   `src/assets/covers/`, and set `addedBy` from the commit author's GitHub
   login (`arthur` / `marlou` mapping in config).
