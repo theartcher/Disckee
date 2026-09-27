@@ -56,13 +56,16 @@ jobs:
           # enrichment commit below can be pushed (docs/SETUP.md section 7).
           # Without it, checkout uses the workflow's own token.
           ssh-key: ${{ secrets.ENRICH_DEPLOY_KEY }}
+          # Full history: enrichment reads it to date wishlist CDs moved to the collection.
+          fetch-depth: ${{ env.ENRICH == 'true' && '0' || '1' }}
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       # Tracklist, label, genres, year and cover from MusicBrainz and Cover Art
-      # Archive for albums added from /add, and addedBy from who saved them.
+      # Archive for albums added from /add, addedBy from who saved them, and
+      # acquiredAt for wishlist CDs moved to the collection.
       - name: Fill in album details
         if: env.ENRICH == 'true'
         run: node scripts/enrich.ts

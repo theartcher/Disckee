@@ -198,7 +198,9 @@ push to `main`), before the site is built:
 ### `/admin`: Sveltia CMS
 
 Used for everything else: fixing fields, notes, favourites, deleting, and
-"Got it", which flips `status` to `collection` and sets `acquiredAt`.
+"Got it", which flips `status` to `collection`. The enrichment step sets
+`acquiredAt` to the day of that change, from git history, unless it was set
+by hand.
 Commits go straight to `main`. The list is sorted by `addedAt` (newest
 first), with a wishlist/collection filter.
 

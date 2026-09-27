@@ -1,12 +1,14 @@
 // Fills in what /add leaves out (docs/PLAN.md section 5, "Enrichment"): for
 // every album with a MusicBrainz release id, the tracklist, label, genres and
 // original year from MusicBrainz, and the front cover from Cover Art Archive.
-// Also sets `addedBy` from the GitHub account that saved the album.
+// Also sets `addedBy` from the GitHub account that saved the album, and
+// `acquiredAt` when a wishlist CD was moved to the collection ("Got it").
 //
 // Only empty fields are filled, so anything edited in /admin is kept, and
 // albums that are already complete are skipped. Run by the build job in
 // .github/workflows/deploy.yml; `node scripts/enrich.ts` runs it locally.
 
+import { execFileSync } from 'node:child_process';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { parseDocument } from 'yaml';
 import { githubLogins } from '../src/lib/album-schema.ts';
@@ -66,6 +68,16 @@ async function addedBy(file: string) {
   return login ? githubLogins[login] : undefined;
 }
 
+/**
+ * The day a collection album stopped being on the wishlist, from git history:
+ * the latest commit that added or removed its `status: wishlist` line (the
+ * workflow checks out the full history for this). Undefined if it never was.
+ */
+function gotItOn(file: string) {
+  const dates = execFileSync('git', ['log', '--follow', '-G^status: *wishlist', '--format=%cs', '--', file], { encoding: 'utf8' });
+  return dates.split('\n')[0] || undefined;
+}
+
 const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 const isEmpty = (value: unknown) => value === undefined || value === null || value === '' || (Array.isArray(value) && !value.length);
 
@@ -114,6 +126,7 @@ async function enrich(name: string) {
     }
   }
   if (isEmpty(data.addedBy)) fill('addedBy', await addedBy(file));
+  if (data.status === 'collection' && isEmpty(data.acquiredAt)) fill('acquiredAt', gotItOn(file));
 
   if (!filled.length) return false;
   await writeFile(file, `---\n${doc.toString({ lineWidth: 0 })}---\n${match[2]}`);
