@@ -151,16 +151,17 @@ and hands off to Sveltia, which does the signed-in save.
 2. **Scan.** The camera opens immediately. Barcode reading uses the
    `barcode-detector` polyfill: native `BarcodeDetector` where it exists, and
    ZXing WASM elsewhere, including iPhones, since Safari has no native
-   detector.
+   detector. The WASM file is served from the site itself, not a CDN.
 3. **Pick.** The page asks MusicBrainz for releases with that barcode and
    shows them as cover thumbnails from Cover Art Archive. One barcode often
    has several pressings; if there's only one match, it's preselected. If the
    barcode is already in `albums.json`, the page says "You already have
    this".
-4. **Collection / Wishlist → Save.** Tapping one opens Sveltia's new-album
-   form with title, artist, year, status and the MusicBrainz id/barcode
-   already filled in (Sveltia supports prefilling via URL parameters). Tap
-   Save.
+4. **Add → Save.** A "We have it / We want it" switch sets the status. The
+   Add button opens Sveltia's new-album form with title, artist, status and
+   the MusicBrainz id/barcode already filled in (Sveltia supports
+   prefilling via URL parameters). Tap Save. The original year comes from
+   enrichment.
 
 After the save, a GitHub Action fills in the rest (section 5, "Enrichment").
 The site is live in a minute or two. `/add` keeps a local list of
@@ -175,16 +176,19 @@ person scanning CDs never gets near.
 
 ### Enrichment (GitHub Action)
 
-Runs on every push to `main`, before the build:
+Runs in the build job of every deploy (Publish Changes in `/admin`, or a
+push to `main`), before the site is built:
 
 - For each album with `ids.musicbrainz` but no tracklist or cover, fetch the
   release from MusicBrainz and the 500px front cover from Cover Art Archive.
 - Fill in tracklist, label and genres, save the cover to
   `src/assets/covers/`, and set `addedBy` from the commit author's GitHub
   login (`arthur` / `marlou` mapping in config).
-- Commit with the workflow's built-in, per-run `GITHUB_TOKEN` (GitHub's own,
-  scoped to this repo, expires after the run), then build and deploy in the
-  same workflow.
+- Commit the result to `main` and build from it in the same run. The
+  `main` ruleset refuses pushes from the workflow's own token, so the push
+  uses an optional deploy key (GitHub's own per-repo key, kept as an Actions
+  secret, docs/SETUP.md section 7). Without it the build still includes the
+  details, and the next deploy fetches them again.
 
 ### `/admin`: Sveltia CMS
 

@@ -44,13 +44,41 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      # Enrichment only runs for the live site, never for pull requests.
+      ENRICH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Optional deploy key that the main ruleset lets through, so the
+          # enrichment commit below can be pushed (docs/SETUP.md section 7).
+          # Without it, checkout uses the workflow's own token.
+          ssh-key: ${{ secrets.ENRICH_DEPLOY_KEY }}
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # Tracklist, label, genres, year and cover from MusicBrainz and Cover Art
+      # Archive for albums added from /add, and addedBy from who saved them.
+      - name: Fill in album details
+        if: env.ENRICH == 'true'
+        run: node scripts/enrich.ts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      # Saves the details in git. If the push is refused, this build still
+      # has them and the next one fetches them again.
+      - name: Commit album details
+        if: env.ENRICH == 'true'
+        run: |
+          git add src/content/albums src/assets/covers
+          git diff --cached --quiet && exit 0
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Fill in album details from MusicBrainz' -m '[skip ci]'
+          git push origin HEAD:main || echo "::warning::Couldn't push the album details to main. See docs/SETUP.md section 7."
       - run: npm run build
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name != 'pull_request'

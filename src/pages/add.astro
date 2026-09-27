@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import AddPage from '../components/AddPage';
+import { baseUrl } from '../lib/albums';
+---
+
+<Base title="Add a CD">
+  <AddPage client:only="react" baseUrl={baseUrl} />
+</Base>

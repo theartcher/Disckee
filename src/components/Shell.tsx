@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Button, ConfigProvider, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
-import { EditOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
+import { Button, ConfigProvider, Dropdown, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
+import { EditOutlined, MoonOutlined, ScanOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
 type Mode = 'light' | 'dark';
@@ -15,7 +15,7 @@ function initialMode(): Mode {
 
 interface Props {
   baseUrl: string;
-  section: Section;
+  section: Section | 'add';
   children: ReactNode;
 }
 
@@ -78,9 +78,20 @@ function Frame({
               { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
             ]}
           />
-          <Tooltip title="Edit albums (sign in with GitHub)">
-            <Button type="text" shape="circle" aria-label="Edit albums" icon={<EditOutlined />} href={`${baseUrl}/admin/`} />
-          </Tooltip>
+          {/* One button for the owners' tools, so the nav still fits on a phone. */}
+          <Dropdown
+            trigger={['click']}
+            placement="bottomRight"
+            menu={{
+              selectedKeys: section === 'add' ? ['add'] : [],
+              items: [
+                { key: 'add', icon: <ScanOutlined />, label: <a href={`${baseUrl}/add/`}>Add a CD</a> },
+                { key: 'admin', icon: <EditOutlined />, label: <a href={`${baseUrl}/admin/`}>Edit albums</a> },
+              ],
+            }}
+          >
+            <Button type="text" shape="circle" aria-label="Add or edit albums" icon={<EditOutlined />} />
+          </Dropdown>
           <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
             <Button
               type="text"
