@@ -104,9 +104,8 @@ export const cmsConfig = (siteUrl: string): CmsConfig => ({
     base_url: authUrl,
     // GitHub sign-in only: no pasting personal access tokens into the browser.
     auth_methods: ['oauth'],
-    // Saves don't deploy on their own ("[skip ci]"); the Publish Changes
-    // button deploys everything saved so far (repository_dispatch in deploy.yml).
-    skip_ci: true,
+    // Every save deploys, since /admin sends you back to the site right after
+    // saving (src/pages/admin/index.astro).
     commit_messages: {
       create: 'Add {{collection}} “{{slug}}”',
       update: 'Update {{collection}} “{{slug}}”',

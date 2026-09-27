@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Button, ConfigProvider, Dropdown, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
+import { Alert, Button, ConfigProvider, Dropdown, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
 import { EditOutlined, MoonOutlined, ScanOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
@@ -105,9 +105,55 @@ function Frame({
       </Layout.Header>
       <Layout.Content style={{ padding: '24px 16px 64px' }}>
         <Flex vertical style={{ maxWidth: 1100, margin: '0 auto', width: '100%' }}>
+          <SavedNotice />
           {children}
         </Flex>
       </Layout.Content>
     </Layout>
+  );
+}
+
+// How often and for how long a page opened with ?saved checks whether the save is live.
+const checkEvery = 15_000;
+const checkFor = 10 * 60_000;
+
+/**
+ * Shown after saving in /admin, which sends you here with ?saved=<slug>.
+ * The site rebuilds after every save, so this page checks for a new version
+ * of itself and reloads when there is one.
+ */
+function SavedNotice() {
+  const [waiting] = useState(() => new URLSearchParams(location.search).has('saved'));
+
+  useEffect(() => {
+    if (!waiting) return;
+    const url = new URL(location.href);
+    url.searchParams.delete('saved');
+    history.replaceState(history.state, '', url);
+
+    const page = () => fetch(url, { cache: 'no-store' }).then((response) => (response.ok ? response.text() : undefined));
+    const started = Date.now();
+    let before: string | undefined;
+    let timer: ReturnType<typeof setTimeout>;
+    const check = async () => {
+      const now = await page().catch(() => undefined);
+      if (before !== undefined && now !== undefined && now !== before) return location.reload();
+      before ??= now;
+      if (Date.now() - started < checkFor) timer = setTimeout(check, checkEvery);
+    };
+    void check();
+    return () => clearTimeout(timer);
+  }, [waiting]);
+
+  if (!waiting) return null;
+  return (
+    <Alert
+      type="success"
+      showIcon
+      closable
+      style={{ marginBottom: 16 }}
+      title="Saved"
+      description="The site is updating. This page reloads by itself in a minute or two."
+    />
   );
 }
