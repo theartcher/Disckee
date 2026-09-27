@@ -32,6 +32,12 @@ export interface AlbumCard {
   artist: string;
   year?: number;
   cover?: CoverImage;
+  /** For the in-browser search, sorting and owner views. */
+  owner: Album['data']['owner'];
+  addedAt: string;
+  label?: string;
+  genres: string[];
+  tracks: string[];
 }
 
 async function coverImage(album: Album, widths: number[]): Promise<CoverImage | undefined> {
@@ -53,13 +59,17 @@ export async function toCard(album: Album): Promise<AlbumCard> {
     artist: album.data.artist,
     year: album.data.year,
     cover: await coverImage(album, [240, 360, 480]),
+    owner: album.data.owner,
+    // Wishlist CDs that arrived count as added the day they arrived.
+    addedAt: (album.data.acquiredAt ?? album.data.addedAt).toISOString(),
+    label: album.data.label,
+    genres: album.data.genres,
+    tracks: album.data.tracklist.map((track) => track.title),
   };
 }
 
-export interface AlbumDetail extends AlbumCard {
+export interface AlbumDetail extends Omit<AlbumCard, 'owner' | 'addedAt'> {
   status: Section;
-  label?: string;
-  genres: string[];
   owner: string;
   addedBy?: string;
   addedAt: string;

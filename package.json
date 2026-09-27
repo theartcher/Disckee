@@ -20,6 +20,7 @@
     "antd": "^6.6.5",
     "astro": "^7.3.5",
     "barcode-detector": "^3.2.2",
+    "fuse.js": "^7.5.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^6.0.3"
