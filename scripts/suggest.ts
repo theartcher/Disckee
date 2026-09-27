@@ -45,8 +45,8 @@ interface ReleaseGroup {
 interface Cache {
   /** Release id → its first credited artist. Never changes. */
   releaseArtist: Record<string, { id: string; name: string }>;
-  /** Artist id → studio albums, refreshed weekly. */
-  albums: Record<string, { at: number; groups: ReleaseGroup[] }>;
+  /** Artist id → official studio albums, refreshed weekly. */
+  officialAlbums: Record<string, { at: number; groups: ReleaseGroup[] }>;
 }
 
 const normalize = (text: string) =>
@@ -67,7 +67,8 @@ const variousArtists = '89ad4ac3-39f7-470e-963a-56509c546377';
 async function main() {
   const cache: Cache = await readFile(cacheFile, 'utf8')
     .then((text) => JSON.parse(text) as Cache)
-    .catch(() => ({ releaseArtist: {}, albums: {} }));
+    .then((stored) => ({ releaseArtist: stored.releaseArtist ?? {}, officialAlbums: stored.officialAlbums ?? {} }))
+    .catch(() => ({ releaseArtist: {}, officialAlbums: {} }));
 
   // What we have or want, by title, and one release id per artist name to find the artist with.
   const known = new Set<string>();
@@ -105,16 +106,18 @@ async function main() {
   console.log(`${artists.size} artists in the collection`);
 
   async function studioAlbums(artistId: string) {
-    const cached = cache.albums[artistId];
+    const cached = cache.officialAlbums[artistId];
     if (cached && Date.now() - cached.at < week) return cached.groups;
     const data = await getJson<{ 'release-groups': ReleaseGroup[] }>(
-      `https://musicbrainz.org/ws/2/release-group?artist=${artistId}&type=album&limit=100&fmt=json`,
+      // website-default: like the artist's page on MusicBrainz, leave out albums that only
+      // exist as bootlegs, promos or pseudo-releases.
+      `https://musicbrainz.org/ws/2/release-group?artist=${artistId}&type=album&release-group-status=website-default&limit=100&fmt=json`,
     );
     // Studio albums only: no live albums, compilations, soundtracks or remixes.
     const groups = data['release-groups']
       .filter((group) => group['primary-type'] === 'Album' && !group['secondary-types']?.length && group['first-release-date'])
       .map(({ id, title, 'first-release-date': date }) => ({ id, title, 'first-release-date': date }));
-    cache.albums[artistId] = { at: Date.now(), groups };
+    cache.officialAlbums[artistId] = { at: Date.now(), groups };
     return groups;
   }
 
