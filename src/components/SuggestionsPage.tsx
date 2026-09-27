@@ -16,7 +16,7 @@ const coverUrl = (album: SuggestedAlbum, size: 250 | 500) => `https://coverartar
 function Cover({ album, artist }: { album: SuggestedAlbum; artist: string }) {
   const { token } = theme.useToken();
   const [missing, setMissing] = useState(false);
-  const box = { width: '100%', aspectRatio: '1', display: 'block', borderRadius: 6, background: token.colorFillTertiary } as const;
+  const box = { width: '100%', aspectRatio: '1', display: 'block', borderRadius: token.borderRadiusLG, background: token.colorFillTertiary } as const;
   if (missing) {
     return (
       <div aria-hidden="true" style={{ ...box, display: 'grid', placeItems: 'center', color: token.colorTextQuaternary, fontSize: 36 }}>

@@ -68,7 +68,7 @@ export default function RandomPick({ albums }: { albums: AlbumCard[] }) {
       >
         {pick && (
           <a href={pick.href} style={{ color: 'inherit' }}>
-            <CoverImage cover={pick.cover} alt={`${pick.title} by ${pick.artist}`} sizes="312px" eager radius={8} />
+            <CoverImage cover={pick.cover} alt={`${pick.title} by ${pick.artist}`} sizes="312px" eager radius="lg" />
             <Typography.Title level={4} style={{ marginBottom: 0 }}>
               {pick.title}
             </Typography.Title>

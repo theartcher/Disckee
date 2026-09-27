@@ -7,13 +7,14 @@ interface Props {
   alt: string;
   sizes: string;
   eager?: boolean;
-  radius?: number;
+  /** Rounded corners from the theme: "lg" for a cover on its own, "sm" for a small thumbnail. Covers inside a Card follow the Card. */
+  radius?: 'sm' | 'lg';
   iconSize?: number;
 }
 
-export default function CoverImage({ cover, alt, sizes, eager, radius = 0, iconSize = 48 }: Props) {
+export default function CoverImage({ cover, alt, sizes, eager, radius, iconSize = 48 }: Props) {
   const { token } = theme.useToken();
-  const box = { width: '100%', aspectRatio: '1', display: 'block', borderRadius: radius } as const;
+  const box = { width: '100%', aspectRatio: '1', display: 'block', borderRadius: radius === 'lg' ? token.borderRadiusLG : radius === 'sm' ? token.borderRadiusSM : 0 } as const;
 
   if (!cover) {
     return (

@@ -48,9 +48,26 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         background: #000;
         color-scheme: dark;
       }
+      /* Stands in for the header until the page has loaded, so the first paint isn't an empty page
+         and the content doesn't jump down when the real header arrives. Same height and colours as Shell's. */
+      #boot-header {
+        position: sticky;
+        top: 0;
+        height: 64px;
+        background: #fff;
+        border-bottom: 1px solid #f0f0f0;
+      }
+      html[data-theme='dark'] #boot-header {
+        background: #141414;
+        border-bottom-color: #303030;
+      }
+      body:has(.ant-layout) #boot-header {
+        display: none;
+      }
     </style>
   </head>
   <body>
+    <div id="boot-header" aria-hidden="true"></div>
     <slot />
     <noscript>Disckee needs JavaScript to show the collection.</noscript>
   </body>

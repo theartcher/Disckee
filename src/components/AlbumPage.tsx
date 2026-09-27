@@ -33,7 +33,7 @@ export default function AlbumPage({ baseUrl, album }: Props) {
             alt={`${album.title} by ${album.artist}`}
             sizes="(min-width: 768px) 360px, 100vw"
             eager
-            radius={8}
+            radius="lg"
           />
         </Col>
 
