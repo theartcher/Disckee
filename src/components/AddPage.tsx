@@ -101,6 +101,8 @@ function Adder({ baseUrl }: Props) {
   const [method, setMethod] = useState<Method>('scan');
   // 0: where it goes, 1: how to find it, 2: find it and add it.
   const [step, setStep] = useState(0);
+  // The furthest step reached, so the steps can be tapped forward again too.
+  const [reached, setReached] = useState(0);
   // A barcode that was scanned but not found, kept when going back to try another way.
   const [carried, setCarried] = useState<string>();
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
@@ -160,6 +162,7 @@ function Adder({ baseUrl }: Props) {
     reset();
     setCarried(keep);
     setStep(next);
+    setReached((furthest) => Math.max(furthest, next));
   };
   const pickStatus = (next: Status) => {
     setStatus(next);
@@ -200,12 +203,12 @@ function Adder({ baseUrl }: Props) {
         size="small"
         responsive={false}
         titlePlacement="vertical"
-        // Earlier steps can be clicked to change the answer.
-        onChange={(next) => next < step && goTo(next)}
+        // Any step already reached can be tapped, back or forward.
+        onChange={(next) => next !== step && next <= reached && goTo(next)}
         items={[
-          { title: 'Where', content: step > 0 ? statusLabels[status] : undefined },
-          { title: 'How', content: step > 1 ? methodLabels[method].short : undefined },
-          { title: 'Find it' },
+          { title: 'Where', content: reached > 0 ? statusLabels[status] : undefined },
+          { title: 'How', content: reached > 1 ? methodLabels[method].short : undefined, disabled: reached < 1 },
+          { title: 'Find it', disabled: reached < 2 },
         ]}
       />
 
@@ -231,7 +234,7 @@ function Adder({ baseUrl }: Props) {
                 icon={option === 'collection' ? <CheckCircleOutlined /> : <HeartOutlined />}
                 onClick={() => pickStatus(option)}
               >
-                {option === 'collection' ? 'We have it: add it to the collection' : 'We want it: add it to the wishlist'}
+                {option === 'collection' ? 'Add to collection' : 'Add to wishlist'}
               </Button>
             ))}
           </Flex>
@@ -286,7 +289,7 @@ function Adder({ baseUrl }: Props) {
       )}
 
       {/* Starts over in this step. A search that found nothing keeps its form below instead. */}
-      {step === 2 && lookup.state !== 'idle' && (method === 'scan' || candidates.length > 0) && (
+      {step === 2 && lookup.state !== 'idle' && candidates.length > 0 && (
         <Button icon={method === 'scan' ? <ScanOutlined /> : <SearchOutlined />} size="large" onClick={reset}>
           {method === 'scan' ? 'Scan another CD' : 'New search'}
         </Button>
@@ -331,6 +334,13 @@ function Adder({ baseUrl }: Props) {
           onIdSearch={lookUpId(barcode)}
           onOtherWay={() => goTo(1)}
         />
+      )}
+
+      {/* Nothing found for a scan: scanning the next CD is the likely next step. */}
+      {lookup.state === 'done' && candidates.length === 0 && method === 'scan' && (
+        <Button type="primary" icon={<ScanOutlined />} size="large" block onClick={reset}>
+          Scan another CD
+        </Button>
       )}
 
       {candidates.length > 0 && (
@@ -624,9 +634,13 @@ function NotFound({
         type="warning"
         showIcon
         title={title}
-        description={description}
-        // Back to the "How" step, where the other ways and "Fill it in by hand" are.
-        action={<Button onClick={onOtherWay}>Try another way</Button>}
+        description={
+          <Flex vertical align="flex-start" gap={12}>
+            {description}
+            {/* Back to the "How" step, where the other ways and "Fill it in by hand" are. */}
+            <Button onClick={onOtherWay}>Try another way</Button>
+          </Flex>
+        }
       />
       {barcode && (searched || releaseId) && (
         <Typography.Text type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Text>
