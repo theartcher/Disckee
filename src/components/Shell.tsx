@@ -15,7 +15,7 @@ function initialMode(): Mode {
 
 interface Props {
   baseUrl: string;
-  section: Section | 'add' | 'suggestions' | 'manage';
+  section: Section | 'home' | 'add' | 'suggestions' | 'manage';
   children: ReactNode;
 }
 
@@ -75,7 +75,7 @@ function Frame({
             selectedKeys={[section]}
             style={{ flex: 1, minWidth: 0, borderBottom: 'none', background: 'transparent' }}
             items={[
-              { key: 'collection', label: <a href={`${baseUrl}/`}>Collection</a> },
+              { key: 'collection', label: <a href={`${baseUrl}/cds/`}>Collection</a> },
               { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
             ]}
           />

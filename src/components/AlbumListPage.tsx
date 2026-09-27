@@ -40,6 +40,7 @@ const owners = [
   { value: 'marlou', label: 'Marlou' },
 ] as const;
 type Owner = (typeof owners)[number]['value'];
+const ownerTitles = { shared: 'Shared CDs', arthur: "Arthur's CDs", marlou: "Marlou's CDs" } as const;
 
 const byText = (a = '', b = '') => a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true });
 const sorts = {
@@ -137,12 +138,12 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
     <Shell baseUrl={baseUrl} section={section}>
       <Flex align="center" justify="space-between" gap={16} wrap>
         <Typography.Title level={2} style={{ margin: 0 }}>
-          {title}
+          {section === 'collection' && owner !== 'all' ? ownerTitles[owner] : title}
         </Typography.Title>
         {share && albums.length > 0 && <ShareButton {...share} label="Share" />}
       </Flex>
       <Typography.Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 16 }}>
-        {subtitle}
+        {section === 'collection' && owner !== 'all' ? null : subtitle}
       </Typography.Paragraph>
 
       {home && !filtered && recent.length > 0 && <Shelf title="Recently added" albums={recent} caption={addedCaption} />}
@@ -150,7 +151,7 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
 
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-          {home && (
+          {home && !filtered && (
             <Typography.Title level={4} style={{ margin: 0 }}>
               All albums
             </Typography.Title>
