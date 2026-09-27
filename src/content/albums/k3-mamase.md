@@ -9,14 +9,10 @@ genres:
   - electronic
   - europop
   - pop
-owner: shared
+owner: marlou
 favorite: false
 cover: ../../assets/covers/k3-mamase.jpg
 coverCredit: cover-art-archive
-musicbrainzId: 91a39889-bb6e-4b51-b2e0-ea4b5f1bb29e
-barcode: '5414233126188'
-addedBy: marlou
-addedAt: 2026-09-27
 tracklist:
   - position: 1-1
     title: MaMaSé!
@@ -90,4 +86,8 @@ tracklist:
   - position: 2-12
     title: Kusjesdag
     duration: 3:46
+musicbrainzId: 91a39889-bb6e-4b51-b2e0-ea4b5f1bb29e
+barcode: '5414233126188'
+addedBy: marlou
+addedAt: 2026-09-27
 ---
