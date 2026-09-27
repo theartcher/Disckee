@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Card, Col, Row } from 'antd';
+import { Breadcrumb, Card, Col, Row } from 'antd';
 import { BulbOutlined, EditOutlined, ScanOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import PageHeader from './PageHeader';
@@ -56,6 +56,11 @@ export function ToolCards({ tools, tiles }: { tools: Tool[]; tiles?: boolean }) 
       })}
     </Row>
   );
+}
+
+/** "Admin / Add a CD" above an owners' tool: the way back to Admin. */
+export function AdminCrumb({ baseUrl, page }: { baseUrl: string; page: string }) {
+  return <Breadcrumb items={[{ title: 'Admin', href: `${baseUrl}/manage/` }, { title: page }]} />;
 }
 
 /** Admin: one place for the owners' tools that change the collection. */
