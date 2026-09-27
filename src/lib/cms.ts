@@ -31,7 +31,7 @@ export const albumFields: Field[] = [
     type: 'date',
     format: 'YYYY-MM-DD',
     required: false,
-    hint: 'Set this when a wishlist CD arrives and you move it to the collection.',
+    hint: 'Filled in on the next publish when you move a wishlist CD to the collection. Set it yourself to use another date.',
   },
   { name: 'year', label: 'Year', widget: 'number', value_type: 'int', min: 1900, max: 2100, required: false },
   { name: 'label', label: 'Record label', widget: 'string', required: false },

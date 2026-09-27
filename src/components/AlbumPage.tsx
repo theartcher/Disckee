@@ -2,6 +2,7 @@ import { Button, Col, Descriptions, Divider, List, Row, Space, Tag, Typography }
 import { ExportOutlined, HeartOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import CoverImage from './CoverImage';
+import ShareButton from './ShareButton';
 import type { AlbumDetail } from '../lib/albums';
 
 interface Props {
@@ -15,7 +16,7 @@ export default function AlbumPage({ baseUrl, album }: Props) {
     album.year && { key: 'year', label: 'Year', children: album.year },
     album.label && { key: 'label', label: 'Label', children: album.label },
     { key: 'owner', label: onWishlist ? 'Wished for by' : 'Belongs to', children: album.owner },
-    album.acquiredAt && { key: 'acquired', label: 'Got it on', children: album.acquiredAt },
+    !onWishlist && album.acquiredAt && { key: 'acquired', label: 'Got it on', children: album.acquiredAt },
     {
       key: 'added',
       label: 'Added',
@@ -65,11 +66,21 @@ export default function AlbumPage({ baseUrl, album }: Props) {
             </Typography.Paragraph>
           )}
 
-          {album.musicbrainzUrl && (
-            <Button href={album.musicbrainzUrl} icon={<ExportOutlined />} target="_blank" rel="noopener">
-              View on MusicBrainz
-            </Button>
-          )}
+          <Space wrap style={{ marginTop: 16 }}>
+            {onWishlist && (
+              <ShareButton
+                href={album.href}
+                title={`${album.title} by ${album.artist}`}
+                text={`On Arthur & Marlou's wishlist: ${album.title} by ${album.artist}`}
+                label="Share"
+              />
+            )}
+            {album.musicbrainzUrl && (
+              <Button href={album.musicbrainzUrl} icon={<ExportOutlined />} target="_blank" rel="noopener">
+                View on MusicBrainz
+              </Button>
+            )}
+          </Space>
 
           {album.discs.length > 0 && (
             <>

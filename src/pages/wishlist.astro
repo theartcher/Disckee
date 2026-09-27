@@ -3,8 +3,10 @@ import Base from '../layouts/Base.astro';
 import AlbumListPage from '../components/AlbumListPage';
 import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
 
-// Basic grid for now; share links and the visitor intro come with #15.
 const albums = await Promise.all((await albumsByStatus('wishlist')).map(toCard));
+// No online claims (docs/PLAN.md section 6): family sorts out who buys what in their own chat.
+const subtitle =
+  "Looking for a gift idea? These are CDs we'd love to have. Share a link in the family chat so nobody buys the same one twice.";
 ---
 
 <Base title="Wishlist">
@@ -13,7 +15,9 @@ const albums = await Promise.all((await albumsByStatus('wishlist')).map(toCard))
     baseUrl={baseUrl}
     section="wishlist"
     title="Wishlist"
-    subtitle="CDs we'd love to add to the collection."
+    subtitle={subtitle}
     albums={albums}
+    share={{ href: `${baseUrl}/wishlist/`, title: "Arthur & Marlou's wishlist", text: "CDs Arthur & Marlou would love to have" }}
+    empty="The wishlist is empty right now"
   />
 </Base>
