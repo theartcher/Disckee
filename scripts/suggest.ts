@@ -25,7 +25,12 @@ async function getJson<T>(url: string): Promise<T> {
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
     lastRequest = Date.now();
   }
-  const response = await fetch(url, { headers: { 'User-Agent': userAgent, Accept: 'application/json' } });
+  let response = await fetch(url, { headers: { 'User-Agent': userAgent, Accept: 'application/json' } });
+  // MusicBrainz answers 503 when it's busy or we're a bit fast: wait and try once more.
+  if (response.status === 503) {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    response = await fetch(url, { headers: { 'User-Agent': userAgent, Accept: 'application/json' } });
+  }
   if (!response.ok) throw new Error(`${new URL(url).host} answered ${response.status}`);
   return (await response.json()) as T;
 }
@@ -165,6 +170,7 @@ async function main() {
   await writeFile(cacheFile, JSON.stringify(cache));
   await mkdir('src/generated', { recursive: true });
   await writeFile(outFile, JSON.stringify({ more, similar: alike }, null, 2));
+  for (const item of alike) console.log(`  ${item.artist}: ${item.album.title}, because of ${item.because.join(' and ')}`);
   console.log(`Suggested ${more.reduce((n, m) => n + m.albums.length, 0)} albums by artists we have and ${alike.length} similar artists.`);
 }
 
