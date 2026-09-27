@@ -10,8 +10,8 @@ genres:
   - europop
 owner: marlou
 favorite: false
-cover: https://media.discordapp.net/attachments/1080197087242764328/1553778303331205170/IMG_20260927_163907177_DOC.jpg?ex=6aba7c4f&is=6ab92acf&hm=95dcbd131ca49153fde42eacf9a464a189369b04b97f7bce6b4cc0c843942b23&=&format=webp&width=768&height=732
-coverCredit: own-photo
+cover: ../../assets/covers/k3-originals-de-reuenie.jpg
+coverCredit: cover-art-archive
 tracklist:
   - position: 1-1
     title: Kuma Hé
