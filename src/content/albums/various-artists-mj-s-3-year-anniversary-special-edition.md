@@ -7,6 +7,7 @@ year: 2026
 label: Joris Brugman
 owner: marlou
 favorite: false
+cover: ../../assets/covers/IMG_20260927_170713562_DOC.webp
 coverCredit: own-photo
 tracklist:
   - position: '1'
@@ -33,5 +34,6 @@ tracklist:
     title: Waste My Time by Zach Gordon
   - position: '12'
     title: What You Know by Two Door Cinema Club
+addedBy: marlou
 addedAt: 2026-09-27
 ---
