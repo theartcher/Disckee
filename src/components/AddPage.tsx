@@ -70,6 +70,7 @@ export default function AddPage({ baseUrl }: Props) {
 }
 
 function Adder({ baseUrl }: Props) {
+  const { token } = theme.useToken();
   const [status, setStatus] = useState<Status>('collection');
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
   const [selected, setSelected] = useState<string>();
@@ -250,7 +251,17 @@ function Adder({ baseUrl }: Props) {
       )}
 
       {draft && (
-        <div style={{ position: 'sticky', bottom: 16 }}>
+        // Stays in reach at the bottom of the screen, clear of the iPhone home bar.
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            marginTop: 8,
+            paddingTop: 12,
+            paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+            background: token.colorBgLayout,
+          }}
+        >
           <Button
             type={duplicate ? 'default' : 'primary'}
             size="large"
