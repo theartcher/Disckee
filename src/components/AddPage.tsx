@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Segmented, Spin, Tag, Typography, theme } from 'antd';
-import { EditOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
+import { EditOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import Scanner from './Scanner';
-import { coverThumbnail, lookUpRelease, releaseUrl, searchBarcode, searchText, type Candidate } from '../lib/musicbrainz';
+import {
+  coverThumbnail,
+  findRelease,
+  lookUpRelease,
+  releaseIdFrom,
+  releaseUrl,
+  searchBarcode,
+  searchText,
+  type Candidate,
+} from '../lib/musicbrainz';
 import {
   frontCover500,
   releaseGenres,
@@ -31,11 +40,18 @@ interface Query {
   title: string;
 }
 
+/** What a lookup went by: a scanned barcode, typed artist/title, or a pasted release id. */
+interface Search {
+  barcode?: string;
+  query?: Query;
+  releaseId?: string;
+}
+
 type Lookup =
   | { state: 'idle' }
-  | { state: 'loading'; barcode?: string; query?: Query }
-  | { state: 'done'; barcode?: string; query?: Query; candidates: Candidate[] }
-  | { state: 'failed'; barcode?: string; query?: Query };
+  | ({ state: 'loading' } & Search)
+  | ({ state: 'done'; candidates: Candidate[] } & Search)
+  | ({ state: 'failed' } & Search);
 
 /** The picked release's full details, fetched once it's selected. */
 interface Details {
@@ -102,30 +118,28 @@ function Adder({ baseUrl }: Props) {
     void publishedAlbums(baseUrl).then((albums) => setKnown([...albums, ...recentHandoffs()]));
   }, [baseUrl]);
 
-  const run = async (
-    barcode: string | undefined,
-    query: Query | undefined,
-    find: (signal: AbortSignal) => Promise<Candidate[]>,
-  ) => {
+  const run = async (search: Search, find: (signal: AbortSignal) => Promise<Candidate[]>) => {
     abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
-    setLookup({ state: 'loading', barcode, query });
+    setLookup({ state: 'loading', ...search });
     setSelected(undefined);
     try {
       const candidates = await find(controller.signal);
       if (controller.signal.aborted) return;
-      setLookup({ state: 'done', barcode, query, candidates });
+      setLookup({ state: 'done', ...search, candidates });
       if (candidates.length === 1) setSelected(candidates[0].id);
     } catch {
-      if (!controller.signal.aborted) setLookup({ state: 'failed', barcode, query });
+      if (!controller.signal.aborted) setLookup({ state: 'failed', ...search });
     }
   };
 
-  const lookUpBarcode = (barcode: string) => run(barcode, undefined, (signal) => searchBarcode(barcode, signal));
+  const lookUpBarcode = (barcode: string) => run({ barcode }, (signal) => searchBarcode(barcode, signal));
   // Keeps the scanned barcode (if any) so it still ends up on the album.
   const lookUpText = (barcode: string | undefined) => (query: Query) =>
-    run(barcode, query, (signal) => searchText(query.artist, query.title, signal));
+    run({ barcode, query }, (signal) => searchText(query.artist, query.title, signal));
+  const lookUpId = (barcode: string | undefined) => (releaseId: string) =>
+    run({ barcode, releaseId }, (signal) => findRelease(releaseId, signal));
   const reset = () => {
     abort.current?.abort();
     setLookup({ state: 'idle' });
@@ -134,6 +148,7 @@ function Adder({ baseUrl }: Props) {
 
   const barcode = lookup.state === 'idle' ? undefined : lookup.barcode;
   const query = lookup.state === 'idle' ? undefined : lookup.query;
+  const releaseId = lookup.state === 'idle' ? undefined : lookup.releaseId;
   const candidates = lookup.state === 'done' ? lookup.candidates : [];
   const choice = candidates.find((candidate) => candidate.id === selected);
   const current = details?.id === selected ? details : undefined;
@@ -192,6 +207,7 @@ function Adder({ baseUrl }: Props) {
             }}
           />
           <TextSearch onSearch={lookUpText(undefined)} />
+          <IdSearch onSearch={lookUpId(undefined)} />
           <ByHand baseUrl={baseUrl} status={status} />
         </>
       ) : (
@@ -202,7 +218,7 @@ function Adder({ baseUrl }: Props) {
 
       {lookup.state === 'loading' && (
         <Flex justify="center" style={{ padding: 32 }}>
-          <Spin size="large" description={query || !barcode ? 'Searching MusicBrainz…' : `Looking up ${barcode}…`}>
+          <Spin size="large" description={query || releaseId || !barcode ? 'Searching MusicBrainz…' : `Looking up ${barcode}…`}>
             <div style={{ width: 200, height: 40 }} />
           </Spin>
         </Flex>
@@ -217,7 +233,8 @@ function Adder({ baseUrl }: Props) {
           action={
             <Button
               onClick={() => {
-                if (query) void lookUpText(barcode)(query);
+                if (releaseId) void lookUpId(barcode)(releaseId);
+                else if (query) void lookUpText(barcode)(query);
                 else if (barcode) void lookUpBarcode(barcode);
                 else reset();
               }}
@@ -229,7 +246,15 @@ function Adder({ baseUrl }: Props) {
       )}
 
       {lookup.state === 'done' && candidates.length === 0 && (
-        <NotFound baseUrl={baseUrl} barcode={barcode} query={query} status={status} onSearch={lookUpText(barcode)} />
+        <NotFound
+          baseUrl={baseUrl}
+          barcode={barcode}
+          query={query}
+          releaseId={releaseId}
+          status={status}
+          onSearch={lookUpText(barcode)}
+          onIdSearch={lookUpId(barcode)}
+        />
       )}
 
       {candidates.length > 0 && (
@@ -506,36 +531,93 @@ function NotFound({
   baseUrl,
   barcode,
   query,
+  releaseId,
   status,
   onSearch,
+  onIdSearch,
 }: {
   baseUrl: string;
   barcode?: string;
   query?: Query;
+  releaseId?: string;
   status: Status;
   onSearch: (query: Query) => void;
+  onIdSearch: (releaseId: string) => void;
 }) {
   const searched = query && [query.artist, query.title].filter(Boolean).join(' – ');
+  const [title, description] = releaseId
+    ? ['No release with that id on MusicBrainz', 'Copy the link from the release page itself (musicbrainz.org/release/…).']
+    : searched
+      ? [
+          `No CDs found for “${searched}”`,
+          'Check the spelling, or leave out words you are unsure of. Or fill it in by hand and add a photo of the cover.',
+        ]
+      : [
+          `No CDs found for barcode ${barcode}`,
+          'Search by artist and title instead, or fill it in by hand and add a photo of the cover.',
+        ];
   return (
     <Card>
-      <Alert
-        type="warning"
-        showIcon
-        title={searched ? `No CDs found for “${searched}”` : `No CDs found for barcode ${barcode}`}
-        description={
-          searched
-            ? 'Check the spelling, or leave out words you are unsure of. Or fill it in by hand and add a photo of the cover.'
-            : 'Search by artist and title instead, or fill it in by hand and add a photo of the cover.'
-        }
-        style={{ marginBottom: 16 }}
-      />
-      {barcode && searched && (
+      <Alert type="warning" showIcon title={title} description={description} style={{ marginBottom: 16 }} />
+      {barcode && (searched || releaseId) && (
         <Typography.Paragraph type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Paragraph>
       )}
-      <TextSearch onSearch={onSearch} initialValues={query} initiallyOpen />
-      <div style={{ marginTop: 16 }}>
+      <Flex vertical gap={16}>
+        {releaseId ? (
+          <IdSearch onSearch={onIdSearch} initialValue={releaseId} initiallyOpen />
+        ) : (
+          <>
+            <TextSearch onSearch={onSearch} initialValues={query} initiallyOpen />
+            <IdSearch onSearch={onIdSearch} />
+          </>
+        )}
         <ByHand baseUrl={baseUrl} status={status} barcode={barcode} query={query} />
-      </div>
+      </Flex>
     </Card>
+  );
+}
+
+/** For a release that's on MusicBrainz but the searches miss: paste its link (or id). */
+function IdSearch({
+  onSearch,
+  initialValue,
+  initiallyOpen = false,
+}: {
+  onSearch: (releaseId: string) => void;
+  initialValue?: string;
+  initiallyOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+  const [invalid, setInvalid] = useState(false);
+  if (!open) {
+    return (
+      <Button type="link" icon={<LinkOutlined />} onClick={() => setOpen(true)} style={{ alignSelf: 'flex-start', paddingInline: 0 }}>
+        Found it on MusicBrainz? Paste the link
+      </Button>
+    );
+  }
+  return (
+    <Form layout="vertical">
+      <Form.Item
+        label="MusicBrainz release link or id"
+        validateStatus={invalid ? 'error' : undefined}
+        help={invalid ? 'That isn’t a release link. It looks like musicbrainz.org/release/…' : undefined}
+        style={{ marginBottom: 0 }}
+      >
+        <Input.Search
+          size="large"
+          defaultValue={initialValue}
+          placeholder="https://musicbrainz.org/release/…"
+          enterButton="Look up"
+          autoComplete="off"
+          onChange={() => setInvalid(false)}
+          onSearch={(value) => {
+            const id = releaseIdFrom(value);
+            setInvalid(!id);
+            if (id) onSearch(id);
+          }}
+        />
+      </Form.Item>
+    </Form>
   );
 }
