@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, ConfigProvider, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
-import { MoonOutlined, SettingOutlined, SunOutlined } from '@ant-design/icons';
+import { MoonOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
 type Mode = 'light' | 'dark';
@@ -97,27 +97,17 @@ function Frame({
             <Menu
               mode="horizontal"
               disabledOverflow={!screens.sm}
-              selectedKeys={[section]}
+              selectedKeys={[owners ? 'admin' : section]}
               style={{ flex: 1, minWidth: 0, borderBottom: 'none', background: 'transparent' }}
               items={[
                 { key: 'collection', label: <a href={`${baseUrl}/collection/`}>Collection</a> },
                 { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
                 { key: 'stats', label: <a href={`${baseUrl}/stats/`}>Stats</a> },
+                // The owners' tools: adding CDs, suggestions, editing.
+                { key: 'admin', label: <a href={`${baseUrl}/manage/`}>Admin</a> },
               ]}
             />
           </ConfigProvider>
-          {/* The owners' tools live on one panel page, so the nav still fits on a phone. */}
-          <Tooltip title="Owners' panel">
-            <Button
-              type="text"
-              // Highlighted like the selected menu item, not as a filled button.
-              style={owners ? { color: token.colorPrimary } : undefined}
-              shape="circle"
-              aria-label="Owners' panel"
-              href={`${baseUrl}/manage/`}
-              icon={<SettingOutlined />}
-            />
-          </Tooltip>
           <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
             <Button
               type="text"

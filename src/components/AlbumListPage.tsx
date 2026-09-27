@@ -202,26 +202,14 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <Flex gap={8} wrap align="center">
-            <Segmented<Owner> options={[...owners]} value={owner} onChange={setOwner} />
-            <Select<Sort>
-              aria-label="Sort by"
-              value={sort}
-              onChange={setSort}
-              options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
-              style={{ minWidth: 190 }}
+          {/* Who and what: 2×2 on a phone, one row on a wider screen. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+            <Select<Owner>
+              aria-label="Whose"
+              value={owner}
+              onChange={setOwner}
+              options={owners.map(({ value, label }) => ({ value, label: value === 'all' ? 'Everyone' : label }))}
             />
-            <Segmented<View>
-              value={view}
-              onChange={setView}
-              options={[
-                { value: 'grid', icon: <AppstoreOutlined />, title: 'Covers' },
-                { value: 'list', icon: <UnorderedListOutlined />, title: 'List' },
-              ]}
-              style={{ marginLeft: 'auto' }}
-            />
-          </Flex>
-          <Flex gap={8}>
             {(
               [
                 { label: 'Artist', value: artist, set: setArtist, options: filters.artists },
@@ -240,14 +228,32 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
                 options={filter.options.map(({ value, count }) => ({ value, label: `${value} (${count})` }))}
                 labelRender={({ value }) => value}
                 popupMatchSelectWidth={false}
-                style={{ flex: 1, minWidth: 0 }}
+                style={{ minWidth: 0 }}
               />
             ))}
+          </div>
+          {/* The count is always there, so filtering doesn't push the albums down. Order and view sit with it: they change how the albums look, not which ones. */}
+          <Flex align="center" gap={8}>
+            <Typography.Text type="secondary" aria-live="polite" style={{ flex: 1 }}>
+              {filtered ? `${shown.length} of ${plural(albums.length)}` : plural(albums.length)}
+            </Typography.Text>
+            <Select<Sort>
+              aria-label="Sort by"
+              variant="borderless"
+              value={sort}
+              onChange={setSort}
+              options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
+              popupMatchSelectWidth={false}
+            />
+            <Segmented<View>
+              value={view}
+              onChange={setView}
+              options={[
+                { value: 'grid', icon: <AppstoreOutlined />, title: 'Covers' },
+                { value: 'list', icon: <UnorderedListOutlined />, title: 'List' },
+              ]}
+            />
           </Flex>
-          {/* Always there, so filtering doesn't push the albums down. */}
-          <Typography.Text type="secondary" aria-live="polite">
-            {filtered ? `${shown.length} of ${plural(albums.length)}` : plural(albums.length)}
-          </Typography.Text>
         </Flex>
       )}
 

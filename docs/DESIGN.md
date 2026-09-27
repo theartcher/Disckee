@@ -6,7 +6,7 @@ How every page should look and behave, so the site feels like one app. Stock Ant
 
 - Every page is `Shell` + `PageHeader` + content, in that order.
 - `PageHeader`: title (`Title level={2}`), optional one-line secondary subtitle, 24px below it before the content.
-- A page shows its parent in a `Breadcrumb` above the title when it isn't in the header menu: album pages (`Collection / Album`, `Wishlist / Album`), owners' tools (`Owners' panel / Add a CD`). The breadcrumb link keeps the filters you came from.
+- A page shows its parent in a `Breadcrumb` above the title when it isn't in the header menu: album pages (`Collection / Album`, `Wishlist / Album`), owners' tools (`Admin / Add a CD`). The breadcrumb link keeps the filters you came from.
 - Content width is the Shell's 1100px. Narrow forms (/add) centre at 640px.
 
 ## 2. Spacing
@@ -33,7 +33,7 @@ How every page should look and behave, so the site feels like one app. Stock Ant
 
 ## 5. Navigation
 
-- The header menu is the map: Collection, Wishlist, Stats, and the owners' gear. The current section is highlighted the menu's way (blue text and underline), never as a filled button.
+- The header menu is the map: Collection, Wishlist, Stats and Admin (the owners' tools). The current section is highlighted the menu's way (blue text and underline), never as a filled button.
 - Every page is reachable in two taps from home, and every page has a way back that isn't the browser button.
 - List state (search, owner, filters, sort, view) lives in the URL, so back, share and reload all land on the same view.
 
@@ -49,7 +49,7 @@ How every page should look and behave, so the site feels like one app. Stock Ant
 ## 7. Words
 
 - Plain, short, English. Titles are nouns ("Stats", "Marlou's CDs"), buttons are verbs ("Share", "Look up").
-- The same thing has the same name everywhere ("Latest additions", "Owners' panel", "Wishlist").
+- The same thing has the same name everywhere ("Latest additions", "Admin", "Wishlist").
 
 ## 8. How changes land
 

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { Card, Col, Row, Typography } from 'antd';
+import { Card, Col, Row } from 'antd';
 import { BulbOutlined, EditOutlined, ScanOutlined } from '@ant-design/icons';
 import Shell from './Shell';
+import PageHeader from './PageHeader';
 
 export interface Tool {
   /** A link, or an action like the random pick. */
@@ -57,16 +58,11 @@ export function ToolCards({ tools, tiles }: { tools: Tool[]; tiles?: boolean }) 
   );
 }
 
-/** The owners' panel: one place for the tools that change the collection. */
+/** Admin: one place for the owners' tools that change the collection. */
 export default function ManagePage({ baseUrl }: { baseUrl: string }) {
   return (
     <Shell baseUrl={baseUrl} section="manage">
-      <Typography.Title level={2} style={{ marginBottom: 4 }}>
-        Owners' panel
-      </Typography.Title>
-      <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
-        Tools for Arthur and Marlou. Saving anything asks you to sign in with GitHub.
-      </Typography.Paragraph>
+      <PageHeader title="Admin" subtitle="Tools for Arthur and Marlou. Saving anything asks you to sign in with GitHub." />
       <ToolCards tools={ownerTools(baseUrl)} />
     </Shell>
   );
