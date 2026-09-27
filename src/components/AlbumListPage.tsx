@@ -6,7 +6,7 @@ import Shell from './Shell';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
 import Shelf from './Shelf';
-import PageHeader, { SectionTitle } from './PageHeader';
+import PageHeader from './PageHeader';
 import type { AlbumCard, Section } from '../lib/albums';
 
 interface Props {
@@ -192,12 +192,23 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
 
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-          <SectionTitle>
-            All albums{' '}
-            <Typography.Text type="secondary" aria-live="polite" style={{ fontSize: 'inherit', fontWeight: 'normal' }}>
-              ({filtered ? `${shown.length} of ${albums.length}` : albums.length})
-            </Typography.Text>
-          </SectionTitle>
+          {/* The view toggle sits with the heading: it changes how the albums look, not which ones. */}
+          <Flex align="center" justify="space-between" gap={8}>
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              All albums{' '}
+              <Typography.Text type="secondary" aria-live="polite" style={{ fontSize: 'inherit', fontWeight: 'normal' }}>
+                ({filtered ? `${shown.length} of ${albums.length}` : albums.length})
+              </Typography.Text>
+            </Typography.Title>
+            <Segmented<View>
+              value={view}
+              onChange={setView}
+              options={[
+                { value: 'grid', icon: <AppstoreOutlined />, title: 'Covers' },
+                { value: 'list', icon: <UnorderedListOutlined />, title: 'List' },
+              ]}
+            />
+          </Flex>
           <Input
             allowClear
             size="large"
@@ -207,53 +218,43 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          {/* Who and what: 2×2 on a phone, one row on a wider screen. */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
-            <Select<Owner>
-              aria-label="Whose"
-              value={owner}
-              onChange={setOwner}
-              options={owners.map(({ value, label }) => ({ value, label: value === 'all' ? 'Everyone' : label }))}
-            />
-            {(
-              [
-                { label: 'Artist', value: artist, set: setArtist, options: filters.artists },
-                { label: 'Genre', value: genre, set: setGenre, options: filters.genres },
-                { label: 'Decade', value: decade, set: setDecade, options: filters.decades },
-              ] as const
-            ).map((filter) => (
-              <Select<string>
-                key={filter.label}
-                allowClear
-                showSearch
-                placeholder={filter.label}
-                aria-label={filter.label}
-                value={filter.value}
-                onChange={(value) => filter.set(value)}
-                options={filter.options.map(({ value, count }) => ({ value, label: `${value} (${count})` }))}
-                labelRender={({ value }) => value}
-                popupMatchSelectWidth={false}
-                style={{ minWidth: 0 }}
-              />
-            ))}
-          </div>
-          {/* Order and view change how the albums look, not which ones, so they get their own row. */}
-          <Flex align="center" justify="space-between" gap={8}>
+          {/* Order first, then who and what: 2×2 on a phone, one row on a wider screen. */}
+          <Flex vertical gap={8}>
             <Select<Sort>
               aria-label="Sort by"
               value={sort}
               onChange={setSort}
               options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
-              popupMatchSelectWidth={false}
             />
-            <Segmented<View>
-              value={view}
-              onChange={setView}
-              options={[
-                { value: 'grid', icon: <AppstoreOutlined />, title: 'Covers' },
-                { value: 'list', icon: <UnorderedListOutlined />, title: 'List' },
-              ]}
-            />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+              <Select<Owner>
+                aria-label="Whose"
+                value={owner}
+                onChange={setOwner}
+                options={owners.map(({ value, label }) => ({ value, label: value === 'all' ? 'Everyone' : label }))}
+              />
+              {(
+                [
+                  { label: 'Artist', value: artist, set: setArtist, options: filters.artists },
+                  { label: 'Genre', value: genre, set: setGenre, options: filters.genres },
+                  { label: 'Decade', value: decade, set: setDecade, options: filters.decades },
+                ] as const
+              ).map((filter) => (
+                <Select<string>
+                  key={filter.label}
+                  allowClear
+                  showSearch
+                  placeholder={filter.label}
+                  aria-label={filter.label}
+                  value={filter.value}
+                  onChange={(value) => filter.set(value)}
+                  options={filter.options.map(({ value, count }) => ({ value, label: `${value} (${count})` }))}
+                  labelRender={({ value }) => value}
+                  popupMatchSelectWidth={false}
+                  style={{ minWidth: 0 }}
+                />
+              ))}
+            </div>
           </Flex>
         </Flex>
       )}
