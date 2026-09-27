@@ -1,7 +1,8 @@
-import { Breadcrumb, Button, Col, Descriptions, Divider, List, Row, Space, Tag, Typography } from 'antd';
+import { Breadcrumb, Button, Col, Descriptions, List, Row, Space, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { ExportOutlined, HeartOutlined } from '@ant-design/icons';
 import Shell from './Shell';
+import { SectionTitle } from './PageHeader';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
 import type { AlbumDetail } from '../lib/albums';
@@ -26,7 +27,6 @@ export default function AlbumPage({ baseUrl, album }: Props) {
   const [back] = useState(() => listHref(baseUrl, album.status));
   const facts = [
     album.year && { key: 'year', label: 'Year', children: album.year },
-    album.label && { key: 'label', label: 'Label', children: album.label },
     { key: 'owner', label: onWishlist ? 'Wished for by' : 'Belongs to', children: album.owner },
     !onWishlist && album.acquiredAt && { key: 'acquired', label: 'Got it on', children: album.acquiredAt },
     {
@@ -102,27 +102,31 @@ export default function AlbumPage({ baseUrl, album }: Props) {
           )}
 
           {album.discs.length > 0 && (
-            <>
-              <Divider titlePlacement="start">Tracklist</Divider>
+            <section style={{ marginTop: 32 }}>
+              <SectionTitle>Tracklist</SectionTitle>
               {album.discs.map(({ disc, tracks }) => (
-                <List
-                  key={disc}
-                  size="small"
-                  header={album.discs.length > 1 ? <Typography.Text strong>Disc {disc}</Typography.Text> : undefined}
-                  dataSource={tracks}
-                  renderItem={(track) => (
-                    <List.Item extra={track.duration && <Typography.Text type="secondary">{track.duration}</Typography.Text>}>
-                      <Space>
-                        <Typography.Text type="secondary" style={{ display: 'inline-block', minWidth: 20, textAlign: 'right' }}>
-                          {track.position}
-                        </Typography.Text>
-                        {track.title}
-                      </Space>
-                    </List.Item>
-                  )}
-                />
+                <div key={disc} style={{ marginBottom: 16 }}>
+                  {album.discs.length > 1 && <Typography.Text strong>Disc {disc}</Typography.Text>}
+                  <List
+                    size="small"
+                    dataSource={tracks}
+                    renderItem={(track) => (
+                      <List.Item
+                        style={{ paddingInline: 0 }}
+                        extra={track.duration && <Typography.Text type="secondary">{track.duration}</Typography.Text>}
+                      >
+                        <Space>
+                          <Typography.Text type="secondary" style={{ display: 'inline-block', minWidth: 20, textAlign: 'right' }}>
+                            {track.position}
+                          </Typography.Text>
+                          {track.title}
+                        </Space>
+                      </List.Item>
+                    )}
+                  />
+                </div>
               ))}
-            </>
+            </section>
           )}
         </Col>
       </Row>
