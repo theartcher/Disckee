@@ -85,12 +85,39 @@ export function searchBarcode(barcode: string, signal?: AbortSignal) {
   return search([...variants].map((code) => `barcode:${code}`).join(' OR '), signal);
 }
 
-const quote = (text: string) => `"${text.replaceAll(/["\\]/g, ' ').trim()}"`;
+/** Lowercase words with Lucene's special characters removed. */
+const words = (text: string) =>
+  text
+    .toLowerCase()
+    .replaceAll(/[+\-&|!(){}[\]^"~*?:\\/]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
 
-/** Fallback when a barcode isn't known: search by artist and title. */
-export function searchText(artist: string, title: string, signal?: AbortSignal) {
-  const parts = [title && `release:${quote(title)}`, artist && `artist:${quote(artist)}`].filter(Boolean);
-  return search(parts.join(' AND '), signal);
+/** Allows one typo in words long enough for that not to match everything. */
+const fuzzy = (word: string) => (word.length > 3 ? `${word}~1` : word);
+
+/**
+ * Fallback when a barcode isn't known: search by artist and title.
+ *
+ * First every word has to match in its own field ("homework" in the title,
+ * "daft" and "punk" in the artist), in any order. If that finds no CD, it
+ * tries again forgiving one typo per word and not caring which box a word
+ * was typed in, so "Homewrk" or everything typed in one box still works.
+ */
+export async function searchText(artist: string, title: string, signal?: AbortSignal) {
+  const titleWords = words(title);
+  const artistWords = words(artist);
+  const all = [...titleWords, ...artistWords];
+  if (!all.length) return [];
+
+  const exact = [
+    titleWords.length && `release:(${titleWords.join(' AND ')})`,
+    artistWords.length && `artist:(${artistWords.join(' AND ')})`,
+  ].filter(Boolean);
+  const found = await search(exact.join(' AND '), signal);
+  if (found.length) return found;
+
+  return search(all.map((word) => `(release:${fuzzy(word)} OR artist:${fuzzy(word)})`).join(' AND '), signal);
 }
 
 /** Everything about one release that /add prefills: year, genres, label, tracklist, cover. */
