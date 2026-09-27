@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Result, Segmented, Spin, Tag, Typography, theme } from 'antd';
+import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Segmented, Spin, Tag, Typography, theme } from 'antd';
 import { EditOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import Scanner from './Scanner';
@@ -25,11 +25,17 @@ import {
   type Status,
 } from '../lib/handoff';
 
+/** What was typed into the artist/title search, kept so a retry doesn't start over. */
+interface Query {
+  artist: string;
+  title: string;
+}
+
 type Lookup =
   | { state: 'idle' }
-  | { state: 'loading'; barcode?: string }
-  | { state: 'done'; barcode?: string; candidates: Candidate[] }
-  | { state: 'failed'; barcode?: string };
+  | { state: 'loading'; barcode?: string; query?: Query }
+  | { state: 'done'; barcode?: string; query?: Query; candidates: Candidate[] }
+  | { state: 'failed'; barcode?: string; query?: Query };
 
 /** The picked release's full details, fetched once it's selected. */
 interface Details {
@@ -96,23 +102,30 @@ function Adder({ baseUrl }: Props) {
     void publishedAlbums(baseUrl).then((albums) => setKnown([...albums, ...recentHandoffs()]));
   }, [baseUrl]);
 
-  const run = async (barcode: string | undefined, find: (signal: AbortSignal) => Promise<Candidate[]>) => {
+  const run = async (
+    barcode: string | undefined,
+    query: Query | undefined,
+    find: (signal: AbortSignal) => Promise<Candidate[]>,
+  ) => {
     abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
-    setLookup({ state: 'loading', barcode });
+    setLookup({ state: 'loading', barcode, query });
     setSelected(undefined);
     try {
       const candidates = await find(controller.signal);
       if (controller.signal.aborted) return;
-      setLookup({ state: 'done', barcode, candidates });
+      setLookup({ state: 'done', barcode, query, candidates });
       if (candidates.length === 1) setSelected(candidates[0].id);
     } catch {
-      if (!controller.signal.aborted) setLookup({ state: 'failed', barcode });
+      if (!controller.signal.aborted) setLookup({ state: 'failed', barcode, query });
     }
   };
 
-  const lookUpBarcode = (barcode: string) => run(barcode, (signal) => searchBarcode(barcode, signal));
+  const lookUpBarcode = (barcode: string) => run(barcode, undefined, (signal) => searchBarcode(barcode, signal));
+  // Keeps the scanned barcode (if any) so it still ends up on the album.
+  const lookUpText = (barcode: string | undefined) => (query: Query) =>
+    run(barcode, query, (signal) => searchText(query.artist, query.title, signal));
   const reset = () => {
     abort.current?.abort();
     setLookup({ state: 'idle' });
@@ -120,6 +133,7 @@ function Adder({ baseUrl }: Props) {
   };
 
   const barcode = lookup.state === 'idle' ? undefined : lookup.barcode;
+  const query = lookup.state === 'idle' ? undefined : lookup.query;
   const candidates = lookup.state === 'done' ? lookup.candidates : [];
   const choice = candidates.find((candidate) => candidate.id === selected);
   const current = details?.id === selected ? details : undefined;
@@ -177,7 +191,7 @@ function Adder({ baseUrl }: Props) {
               if (isBarcode(code)) void lookUpBarcode(code);
             }}
           />
-          <TextSearch onSearch={(artist, title) => run(undefined, (signal) => searchText(artist, title, signal))} />
+          <TextSearch onSearch={lookUpText(undefined)} />
         </>
       ) : (
         <Button icon={<ScanOutlined />} size="large" onClick={reset}>
@@ -187,7 +201,7 @@ function Adder({ baseUrl }: Props) {
 
       {lookup.state === 'loading' && (
         <Flex justify="center" style={{ padding: 32 }}>
-          <Spin size="large" description={barcode ? `Looking up ${barcode}…` : 'Searching MusicBrainz…'}>
+          <Spin size="large" description={query || !barcode ? 'Searching MusicBrainz…' : `Looking up ${barcode}…`}>
             <div style={{ width: 200, height: 40 }} />
           </Spin>
         </Flex>
@@ -200,13 +214,21 @@ function Adder({ baseUrl }: Props) {
           title="MusicBrainz didn't answer"
           description="Check your connection and try again."
           action={
-            <Button onClick={() => (barcode ? void lookUpBarcode(barcode) : reset())}>Try again</Button>
+            <Button
+              onClick={() => {
+                if (query) void lookUpText(barcode)(query);
+                else if (barcode) void lookUpBarcode(barcode);
+                else reset();
+              }}
+            >
+              Try again
+            </Button>
           }
         />
       )}
 
       {lookup.state === 'done' && candidates.length === 0 && (
-        <NotFound baseUrl={baseUrl} barcode={barcode} status={status} onSearch={(artist, title) => run(barcode, (signal) => searchText(artist, title, signal))} />
+        <NotFound baseUrl={baseUrl} barcode={barcode} query={query} status={status} onSearch={lookUpText(barcode)} />
       )}
 
       {candidates.length > 0 && (
@@ -401,7 +423,15 @@ function CandidateCard({ candidate, selected }: { candidate: Candidate; selected
   );
 }
 
-function TextSearch({ onSearch, initiallyOpen = false }: { onSearch: (artist: string, title: string) => void; initiallyOpen?: boolean }) {
+function TextSearch({
+  onSearch,
+  initialValues,
+  initiallyOpen = false,
+}: {
+  onSearch: (query: Query) => void;
+  initialValues?: Query;
+  initiallyOpen?: boolean;
+}) {
   const [open, setOpen] = useState(initiallyOpen);
   if (!open) {
     return (
@@ -413,7 +443,10 @@ function TextSearch({ onSearch, initiallyOpen = false }: { onSearch: (artist: st
   return (
     <Form
       layout="vertical"
-      onFinish={({ artist, title }: { artist?: string; title?: string }) => onSearch(artist?.trim() ?? '', title?.trim() ?? '')}
+      initialValues={initialValues}
+      onFinish={({ artist, title }: { artist?: string; title?: string }) =>
+        onSearch({ artist: artist?.trim() ?? '', title: title?.trim() ?? '' })
+      }
     >
       <Form.Item name="artist" label="Artist">
         <Input size="large" autoComplete="off" />
@@ -442,24 +475,41 @@ function TextSearch({ onSearch, initiallyOpen = false }: { onSearch: (artist: st
 function NotFound({
   baseUrl,
   barcode,
+  query,
   status,
   onSearch,
 }: {
   baseUrl: string;
   barcode?: string;
+  query?: Query;
   status: Status;
-  onSearch: (artist: string, title: string) => void;
+  onSearch: (query: Query) => void;
 }) {
-  const draft: Draft = { status, barcode, coverCredit: 'own-photo' };
+  const draft: Draft = {
+    status,
+    barcode,
+    artist: query?.artist || undefined,
+    title: query?.title || undefined,
+    coverCredit: 'own-photo',
+  };
+  const searched = query && [query.artist, query.title].filter(Boolean).join(' – ');
   return (
     <Card>
-      <Result
-        status="info"
-        title={barcode ? `MusicBrainz doesn't know barcode ${barcode}` : 'Nothing found on MusicBrainz'}
-        subTitle="Search by artist and title instead, or fill it in by hand and add a photo of the cover."
-        style={{ padding: 0 }}
+      <Alert
+        type="warning"
+        showIcon
+        title={searched ? `No CDs found for “${searched}”` : `No CDs found for barcode ${barcode}`}
+        description={
+          searched
+            ? 'Check the spelling, or leave out words you are unsure of. Or fill it in by hand and add a photo of the cover.'
+            : 'Search by artist and title instead, or fill it in by hand and add a photo of the cover.'
+        }
+        style={{ marginBottom: 16 }}
       />
-      <TextSearch onSearch={onSearch} initiallyOpen />
+      {barcode && searched && (
+        <Typography.Paragraph type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Paragraph>
+      )}
+      <TextSearch onSearch={onSearch} initialValues={query} initiallyOpen />
       <Button
         type="link"
         icon={<EditOutlined />}
