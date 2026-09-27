@@ -4,7 +4,9 @@ import { BulbOutlined, EditOutlined, ScanOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 
 export interface Tool {
-  href: string;
+  /** A link, or an action like the random pick. */
+  href?: string;
+  onClick?: () => void;
   icon: ReactNode;
   title: string;
   description: string;
@@ -20,22 +22,37 @@ export const ownerTools = (baseUrl: string): Tool[] => [
 export function ToolCards({ tools, tiles }: { tools: Tool[]; tiles?: boolean }) {
   return (
     <Row gutter={[16, 16]}>
-      {tools.map((tool) => (
-        <Col key={tool.href} xs={tiles ? 12 : 24} sm={12} lg={tiles ? 6 : 8}>
-          <a href={tool.href} style={{ display: 'block', height: '100%' }}>
-            <Card hoverable style={{ height: '100%' }} styles={tiles ? { body: { padding: 16 } } : undefined}>
-              {tiles ? (
-                <>
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>{tool.icon}</div>
-                  <Card.Meta title={tool.title} description={tool.description} />
-                </>
-              ) : (
-                <Card.Meta avatar={<span style={{ fontSize: 24 }}>{tool.icon}</span>} title={tool.title} description={tool.description} />
-              )}
-            </Card>
-          </a>
-        </Col>
-      ))}
+      {tools.map((tool) => {
+        const card = (
+          <Card hoverable style={{ height: '100%' }} styles={tiles ? { body: { padding: 16 } } : undefined}>
+            {tiles ? (
+              <>
+                <div style={{ fontSize: 28, marginBottom: 8 }}>{tool.icon}</div>
+                <Card.Meta title={tool.title} description={tool.description} />
+              </>
+            ) : (
+              <Card.Meta avatar={<span style={{ fontSize: 24 }}>{tool.icon}</span>} title={tool.title} description={tool.description} />
+            )}
+          </Card>
+        );
+        return (
+          <Col key={tool.title} xs={tiles ? 12 : 24} sm={12} lg={tiles ? 6 : 8}>
+            {tool.href ? (
+              <a href={tool.href} style={{ display: 'block', height: '100%' }}>
+                {card}
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={tool.onClick}
+                style={{ all: 'unset', display: 'block', width: '100%', height: '100%', boxSizing: 'border-box', cursor: 'pointer' }}
+              >
+                {card}
+              </button>
+            )}
+          </Col>
+        );
+      })}
     </Row>
   );
 }

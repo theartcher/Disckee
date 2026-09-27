@@ -4,9 +4,8 @@ import AlbumListPage from '../components/AlbumListPage';
 import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
 
 const albums = await Promise.all((await albumsByStatus('collection')).map(toCard));
-const count = `${albums.length} ${albums.length === 1 ? 'album' : 'albums'} on the shelf.`;
 ---
 
 <Base title="Collection">
-  <AlbumListPage client:only="react" baseUrl={baseUrl} section="collection" title="Our collection" subtitle={count} albums={albums} home />
+  <AlbumListPage client:only="react" baseUrl={baseUrl} section="collection" title="Our collection" albums={albums} home />
 </Base>

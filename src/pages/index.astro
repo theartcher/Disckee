@@ -23,5 +23,5 @@ const tiles = allTiles.filter((tile) => tile.caption !== '0 CDs' || tile.icon);
 ---
 
 <Base>
-  <HomePage client:only="react" baseUrl={baseUrl} tiles={tiles} />
+  <HomePage client:only="react" baseUrl={baseUrl} tiles={tiles} albums={await Promise.all(collection.map(toCard))} />
 </Base>

@@ -1,8 +1,9 @@
 import { Card, Typography, theme } from 'antd';
-import { CustomerServiceOutlined, HeartOutlined, SettingOutlined } from '@ant-design/icons';
+import { CustomerServiceOutlined, HeartOutlined } from '@ant-design/icons';
 import { ToolCards, ownerTools } from './ManagePage';
 import Shell from './Shell';
-import type { CoverImage } from '../lib/albums';
+import { useRandomPick } from './RandomPick';
+import type { AlbumCard, CoverImage } from '../lib/albums';
 
 export interface Tile {
   href: string;
@@ -47,7 +48,8 @@ function Mosaic({ tile }: { tile: Tile }) {
 }
 
 /** The front page: a tile per part of the site. */
-export default function HomePage({ baseUrl, tiles }: { baseUrl: string; tiles: Tile[] }) {
+export default function HomePage({ baseUrl, tiles, albums }: { baseUrl: string; tiles: Tile[]; albums: AlbumCard[] }) {
+  const pick = useRandomPick(albums);
   return (
     <Shell baseUrl={baseUrl} section="home">
       <Typography.Title level={2} style={{ marginBottom: 4 }}>
@@ -70,13 +72,15 @@ export default function HomePage({ baseUrl, tiles }: { baseUrl: string; tiles: T
       <Typography.Title level={4} style={{ marginTop: 32 }}>
         For Arthur & Marlou
       </Typography.Title>
+      {/* The random pick lives here rather than on the collection page: it's for the two of us, not a way to browse. */}
       <ToolCards
         tiles
         tools={[
           ...ownerTools(baseUrl),
-          { href: `${baseUrl}/manage/`, icon: <SettingOutlined />, title: "Owners' panel", description: 'Every tool on one page.' },
+          { onClick: pick.draw, icon: <CustomerServiceOutlined />, title: 'Pick a CD', description: "A random one we haven't played lately." },
         ]}
       />
+      {pick.picker}
     </Shell>
   );
 }

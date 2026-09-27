@@ -6,22 +6,24 @@ import Shell from './Shell';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
 import Shelf from './Shelf';
-import RandomPick from './RandomPick';
+import PageHeader, { SectionTitle } from './PageHeader';
 import type { AlbumCard, Section } from '../lib/albums';
 
 interface Props {
   baseUrl: string;
   section: Section;
   title: string;
-  subtitle: ReactNode;
+  /** Under the title. The collection shows its album count instead. */
+  subtitle?: ReactNode;
   albums: AlbumCard[];
   /** Adds share buttons for the page and for each album. */
   share?: { href: string; title: string; text: string };
   empty?: string;
-  /** The home page: adds the "Latest additions" and favourites shelves and a random pick. */
+  /** The collection: adds the "Latest additions" and favourites shelves. */
   home?: boolean;
 }
 
+const plural = (n: number) => `${n} ${n === 1 ? 'album' : 'albums'}`;
 const names = { arthur: 'Arthur', marlou: 'Marlou' } as const;
 const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
@@ -163,8 +165,10 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
   const ownerTitle = owner === 'all' ? undefined : ownerTitles[section][owner];
   // Sharing one person's wishlist shares just their part of it.
   const pageShare = share && ownerTitle ? { ...share, href: `${share.href}?owner=${owner}`, title: ownerTitle } : share;
-  const recent = useMemo(() => albums.toSorted(sorts.added.compare).slice(0, 10), [albums]);
-  const favorites = useMemo(() => albums.filter((album) => album.favorite), [albums]);
+  // The shelves and the count follow the owner filter instead of disappearing, so switching owner doesn't reshape the page.
+  const owned = useMemo(() => (owner === 'all' ? albums : albums.filter((album) => album.owner === owner)), [albums, owner]);
+  const recent = useMemo(() => owned.toSorted(sorts.added.compare).slice(0, 10), [owned]);
+  const favorites = useMemo(() => owned.filter((album) => album.favorite), [owned]);
   const shareItem = (album: AlbumCard) =>
     share && (
       <ShareButton
@@ -177,26 +181,18 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
 
   return (
     <Shell baseUrl={baseUrl} section={section}>
-      <Flex align="center" justify="space-between" gap={16} wrap>
-        <Typography.Title level={2} style={{ margin: 0 }}>
-          {ownerTitle ?? title}
-        </Typography.Title>
-        {pageShare && albums.length > 0 && <ShareButton {...pageShare} label="Share" />}
-      </Flex>
-      <Typography.Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 16 }}>
-        {section === 'collection' && ownerTitle ? null : subtitle}
-      </Typography.Paragraph>
+      <PageHeader
+        title={ownerTitle ?? title}
+        subtitle={section === 'collection' ? `${plural(owned.length)} on the shelf.` : subtitle}
+        actions={pageShare && albums.length > 0 && <ShareButton {...pageShare} label="Share" />}
+      />
 
-      {home && !filtered && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
-      {home && !filtered && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
+      {home && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
+      {home && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
 
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-          {home && !filtered && (
-            <Typography.Title level={4} style={{ margin: 0 }}>
-              All albums
-            </Typography.Title>
-          )}
+          {home && <SectionTitle>All albums</SectionTitle>}
           <Input
             allowClear
             size="large"
@@ -215,7 +211,6 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
               options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
               style={{ minWidth: 190 }}
             />
-            {home && <RandomPick albums={shown} />}
             <Segmented<View>
               value={view}
               onChange={setView}
@@ -249,11 +244,10 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
               />
             ))}
           </Flex>
-          {filtered && (
-            <Typography.Text type="secondary">
-              {shown.length} of {albums.length} {albums.length === 1 ? 'album' : 'albums'}
-            </Typography.Text>
-          )}
+          {/* Always there, so filtering doesn't push the albums down. */}
+          <Typography.Text type="secondary" aria-live="polite">
+            {filtered ? `${shown.length} of ${plural(albums.length)}` : plural(albums.length)}
+          </Typography.Text>
         </Flex>
       )}
 

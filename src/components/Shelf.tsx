@@ -1,4 +1,5 @@
 import { Flex, Typography } from 'antd';
+import { SectionTitle } from './PageHeader';
 import CoverImage from './CoverImage';
 import type { AlbumCard } from '../lib/albums';
 
@@ -11,10 +12,8 @@ interface Props {
 /** A horizontal, swipeable row of covers. */
 export default function Shelf({ title, albums, caption }: Props) {
   return (
-    <section style={{ marginBottom: 24 }}>
-      <Typography.Title level={4} style={{ marginTop: 0 }}>
-        {title}
-      </Typography.Title>
+    <section style={{ marginBottom: 32 }}>
+      <SectionTitle>{title}</SectionTitle>
       <Flex
         gap={12}
         style={{ overflowX: 'auto', scrollSnapType: 'x mandatory', scrollPaddingInline: 16, paddingBottom: 8, marginInline: -16, paddingInline: 16 }}
