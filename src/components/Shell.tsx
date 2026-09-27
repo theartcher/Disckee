@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button, ConfigProvider, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
-import { MoonOutlined, SunOutlined } from '@ant-design/icons';
+import { EditOutlined, MoonOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
 type Mode = 'light' | 'dark';
@@ -78,6 +78,9 @@ function Frame({
               { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
             ]}
           />
+          <Tooltip title="Edit albums (sign in with GitHub)">
+            <Button type="text" shape="circle" aria-label="Edit albums" icon={<EditOutlined />} href={`${baseUrl}/admin/`} />
+          </Tooltip>
           <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
             <Button
               type="text"
