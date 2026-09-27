@@ -15,23 +15,22 @@ export default function PageHeader({ title, subtitle, actions, above }: Props) {
   return (
     <header style={{ marginBottom: 24 }}>
       {above && <div style={{ marginBottom: 12 }}>{above}</div>}
-      <Flex align="flex-end" justify="space-between" gap={12} wrap>
-        <div style={{ minWidth: 0 }}>
-          <Typography.Title level={2} style={{ margin: 0 }}>
-            {title}
-          </Typography.Title>
-          {subtitle && (
-            <Typography.Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
-              {subtitle}
-            </Typography.Paragraph>
-          )}
-        </div>
+      {/* Actions share the title's row, so they stay beside it on a phone instead of dropping under the subtitle. */}
+      <Flex align="center" justify="space-between" gap={12}>
+        <Typography.Title level={2} style={{ margin: 0, minWidth: 0 }}>
+          {title}
+        </Typography.Title>
         {actions && (
-          <Flex gap={8} wrap>
+          <Flex gap={8} style={{ flex: 'none' }}>
             {actions}
           </Flex>
         )}
       </Flex>
+      {subtitle && (
+        <Typography.Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
+          {subtitle}
+        </Typography.Paragraph>
+      )}
     </header>
   );
 }

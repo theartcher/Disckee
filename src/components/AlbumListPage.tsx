@@ -6,22 +6,24 @@ import Shell from './Shell';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
 import Shelf from './Shelf';
-import RandomPick from './RandomPick';
+import PageHeader from './PageHeader';
 import type { AlbumCard, Section } from '../lib/albums';
 
 interface Props {
   baseUrl: string;
   section: Section;
   title: string;
-  subtitle: ReactNode;
+  /** Under the title. The collection shows its album count instead. */
+  subtitle?: ReactNode;
   albums: AlbumCard[];
   /** Adds share buttons for the page and for each album. */
   share?: { href: string; title: string; text: string };
   empty?: string;
-  /** The home page: adds the "Latest additions" and favourites shelves and a random pick. */
+  /** The collection: adds the "Latest additions" and favourites shelves. */
   home?: boolean;
 }
 
+const plural = (n: number) => `${n} ${n === 1 ? 'album' : 'albums'}`;
 const names = { arthur: 'Arthur', marlou: 'Marlou' } as const;
 const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
@@ -163,8 +165,10 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
   const ownerTitle = owner === 'all' ? undefined : ownerTitles[section][owner];
   // Sharing one person's wishlist shares just their part of it.
   const pageShare = share && ownerTitle ? { ...share, href: `${share.href}?owner=${owner}`, title: ownerTitle } : share;
-  const recent = useMemo(() => albums.toSorted(sorts.added.compare).slice(0, 10), [albums]);
-  const favorites = useMemo(() => albums.filter((album) => album.favorite), [albums]);
+  // The shelves and the count follow the owner filter instead of disappearing, so switching owner doesn't reshape the page.
+  const owned = useMemo(() => (owner === 'all' ? albums : albums.filter((album) => album.owner === owner)), [albums, owner]);
+  const recent = useMemo(() => owned.toSorted(sorts.added.compare).slice(0, 10), [owned]);
+  const favorites = useMemo(() => owned.filter((album) => album.favorite), [owned]);
   const shareItem = (album: AlbumCard) =>
     share && (
       <ShareButton
@@ -177,26 +181,34 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
 
   return (
     <Shell baseUrl={baseUrl} section={section}>
-      <Flex align="center" justify="space-between" gap={16} wrap>
-        <Typography.Title level={2} style={{ margin: 0 }}>
-          {ownerTitle ?? title}
-        </Typography.Title>
-        {pageShare && albums.length > 0 && <ShareButton {...pageShare} label="Share" />}
-      </Flex>
-      <Typography.Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 16 }}>
-        {section === 'collection' && ownerTitle ? null : subtitle}
-      </Typography.Paragraph>
+      <PageHeader
+        title={ownerTitle ?? title}
+        subtitle={section === 'collection' ? `${plural(owned.length)} on the shelf.` : subtitle}
+        actions={pageShare && albums.length > 0 && <ShareButton {...pageShare} label="Share" />}
+      />
 
-      {home && !filtered && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
-      {home && !filtered && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
+      {home && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
+      {home && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
 
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-          {home && !filtered && (
+          {/* The view toggle sits with the heading: it changes how the albums look, not which ones. */}
+          <Flex align="center" justify="space-between" gap={8}>
             <Typography.Title level={4} style={{ margin: 0 }}>
-              All albums
+              All albums{' '}
+              <Typography.Text type="secondary" aria-live="polite" style={{ fontSize: 'inherit', fontWeight: 'normal' }}>
+                ({filtered ? `${shown.length} of ${albums.length}` : albums.length})
+              </Typography.Text>
             </Typography.Title>
-          )}
+            <Segmented<View>
+              value={view}
+              onChange={setView}
+              options={[
+                { value: 'grid', icon: <AppstoreOutlined />, title: 'Covers' },
+                { value: 'list', icon: <UnorderedListOutlined />, title: 'List' },
+              ]}
+            />
+          </Flex>
           <Input
             allowClear
             size="large"
@@ -206,54 +218,44 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <Flex gap={8} wrap align="center">
-            <Segmented<Owner> options={[...owners]} value={owner} onChange={setOwner} />
+          {/* Order first, then who and what: 2×2 on a phone, one row on a wider screen. */}
+          <Flex vertical gap={8}>
             <Select<Sort>
               aria-label="Sort by"
               value={sort}
               onChange={setSort}
               options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
-              style={{ minWidth: 190 }}
             />
-            {home && <RandomPick albums={shown} />}
-            <Segmented<View>
-              value={view}
-              onChange={setView}
-              options={[
-                { value: 'grid', icon: <AppstoreOutlined />, title: 'Covers' },
-                { value: 'list', icon: <UnorderedListOutlined />, title: 'List' },
-              ]}
-              style={{ marginLeft: 'auto' }}
-            />
-          </Flex>
-          <Flex gap={8}>
-            {(
-              [
-                { label: 'Artist', value: artist, set: setArtist, options: filters.artists },
-                { label: 'Genre', value: genre, set: setGenre, options: filters.genres },
-                { label: 'Decade', value: decade, set: setDecade, options: filters.decades },
-              ] as const
-            ).map((filter) => (
-              <Select<string>
-                key={filter.label}
-                allowClear
-                showSearch
-                placeholder={filter.label}
-                aria-label={filter.label}
-                value={filter.value}
-                onChange={(value) => filter.set(value)}
-                options={filter.options.map(({ value, count }) => ({ value, label: `${value} (${count})` }))}
-                labelRender={({ value }) => value}
-                popupMatchSelectWidth={false}
-                style={{ flex: 1, minWidth: 0 }}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8 }}>
+              <Select<Owner>
+                aria-label="Whose"
+                value={owner}
+                onChange={setOwner}
+                options={owners.map(({ value, label }) => ({ value, label: value === 'all' ? 'Everyone' : label }))}
               />
-            ))}
+              {(
+                [
+                  { label: 'Artist', value: artist, set: setArtist, options: filters.artists },
+                  { label: 'Genre', value: genre, set: setGenre, options: filters.genres },
+                  { label: 'Decade', value: decade, set: setDecade, options: filters.decades },
+                ] as const
+              ).map((filter) => (
+                <Select<string>
+                  key={filter.label}
+                  allowClear
+                  showSearch
+                  placeholder={filter.label}
+                  aria-label={filter.label}
+                  value={filter.value}
+                  onChange={(value) => filter.set(value)}
+                  options={filter.options.map(({ value, count }) => ({ value, label: `${value} (${count})` }))}
+                  labelRender={({ value }) => value}
+                  popupMatchSelectWidth={false}
+                  style={{ minWidth: 0 }}
+                />
+              ))}
+            </div>
           </Flex>
-          {filtered && (
-            <Typography.Text type="secondary">
-              {shown.length} of {albums.length} {albums.length === 1 ? 'album' : 'albums'}
-            </Typography.Text>
-          )}
         </Flex>
       )}
 

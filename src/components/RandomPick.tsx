@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Modal, Typography, message } from 'antd';
-import { CheckOutlined, CustomerServiceOutlined, ReloadOutlined } from '@ant-design/icons';
+import { CheckOutlined, ReloadOutlined } from '@ant-design/icons';
 import CoverImage from './CoverImage';
 import type { AlbumCard } from '../lib/albums';
 
@@ -24,8 +24,11 @@ function rememberPlayed(id: string) {
   } catch {}
 }
 
-/** "What should we play?": a random CD from the albums currently shown, skipping ones played in the last two weeks. */
-export default function RandomPick({ albums }: { albums: AlbumCard[] }) {
+/**
+ * "What should we play?": a random CD, skipping ones played in the last two weeks.
+ * Returns `draw`, which opens the picker, and `picker`, the dialog to render somewhere on the page.
+ */
+export function useRandomPick(albums: AlbumCard[]) {
   const [pick, setPick] = useState<AlbumCard>();
   const [toast, holder] = message.useMessage();
 
@@ -46,12 +49,9 @@ export default function RandomPick({ albums }: { albums: AlbumCard[] }) {
     void toast.success(`Enjoy ${pick.title}! It won't come up again for two weeks.`);
   };
 
-  return (
+  const picker = (
     <>
       {holder}
-      <Button icon={<CustomerServiceOutlined />} onClick={draw} disabled={!albums.length}>
-        What should we play?
-      </Button>
       <Modal
         open={!!pick}
         onCancel={() => setPick(undefined)}
@@ -78,4 +78,6 @@ export default function RandomPick({ albums }: { albums: AlbumCard[] }) {
       </Modal>
     </>
   );
+
+  return { draw, picker };
 }
