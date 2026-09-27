@@ -36,10 +36,17 @@ export default function PageHeader({ title, subtitle, actions, above }: Props) {
 }
 
 /** A heading for a section within a page: "Latest additions", "All albums", "More from …". */
-export function SectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <Typography.Title level={4} style={{ margin: '0 0 12px' }}>
+export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  const title = (
+    <Typography.Title level={4} style={{ margin: action ? 0 : '0 0 12px' }}>
       {children}
     </Typography.Title>
+  );
+  if (!action) return title;
+  return (
+    <Flex align="center" justify="space-between" gap={8} style={{ marginBottom: 12 }}>
+      {title}
+      {action}
+    </Flex>
   );
 }

@@ -192,7 +192,12 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
 
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
-          {home && <SectionTitle>All albums</SectionTitle>}
+          <SectionTitle>
+            All albums{' '}
+            <Typography.Text type="secondary" aria-live="polite" style={{ fontSize: 'inherit', fontWeight: 'normal' }}>
+              ({filtered ? `${shown.length} of ${albums.length}` : albums.length})
+            </Typography.Text>
+          </SectionTitle>
           <Input
             allowClear
             size="large"
@@ -232,14 +237,10 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
               />
             ))}
           </div>
-          {/* The count is always there, so filtering doesn't push the albums down. Order and view sit with it: they change how the albums look, not which ones. */}
-          <Flex align="center" gap={8}>
-            <Typography.Text type="secondary" aria-live="polite" style={{ flex: 1 }}>
-              {filtered ? `${shown.length} of ${plural(albums.length)}` : plural(albums.length)}
-            </Typography.Text>
+          {/* Order and view change how the albums look, not which ones, so they get their own row. */}
+          <Flex align="center" justify="space-between" gap={8}>
             <Select<Sort>
               aria-label="Sort by"
-              variant="borderless"
               value={sort}
               onChange={setSort}
               options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
