@@ -8,9 +8,10 @@ interface Props {
   sizes: string;
   eager?: boolean;
   radius?: number;
+  iconSize?: number;
 }
 
-export default function CoverImage({ cover, alt, sizes, eager, radius = 0 }: Props) {
+export default function CoverImage({ cover, alt, sizes, eager, radius = 0, iconSize = 48 }: Props) {
   const { token } = theme.useToken();
   const box = { width: '100%', aspectRatio: '1', display: 'block', borderRadius: radius } as const;
 
@@ -25,7 +26,7 @@ export default function CoverImage({ cover, alt, sizes, eager, radius = 0 }: Pro
           placeItems: 'center',
           background: token.colorFillTertiary,
           color: token.colorTextQuaternary,
-          fontSize: 48,
+          fontSize: iconSize,
         }}
       >
         <CustomerServiceOutlined />
