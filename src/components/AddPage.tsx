@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Segmented, Spin, Tabs, Tag, Typography, theme } from 'antd';
-import { EditOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Spin, Steps, Tag, Typography, theme } from 'antd';
+import { CheckCircleOutlined, EditOutlined, HeartOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
+import { SectionTitle } from './PageHeader';
 import Scanner from './Scanner';
 import {
   coverThumbnail,
@@ -40,7 +41,7 @@ interface Query {
   title: string;
 }
 
-/** How the CD is found: one tab each. */
+/** How the CD is found, picked in the second step. */
 type Method = 'scan' | 'text' | 'id';
 
 /** What a lookup went by: a scanned barcode, typed artist/title, or a pasted release id. */
@@ -98,7 +99,9 @@ function Adder({ baseUrl }: Props) {
   const { token } = theme.useToken();
   const [status, setStatus] = useState<Status>('collection');
   const [method, setMethod] = useState<Method>('scan');
-  // A barcode that was scanned but not found, kept when switching to another tab.
+  // 0: where it goes, 1: how to find it, 2: find it and add it.
+  const [step, setStep] = useState(0);
+  // A barcode that was scanned but not found, kept when going back to try another way.
   const [carried, setCarried] = useState<string>();
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
   const [selected, setSelected] = useState<string>();
@@ -152,11 +155,19 @@ function Adder({ baseUrl }: Props) {
     setSelected(undefined);
     setCarried(undefined);
   };
-  const choose = (next: Method) => {
+  const goTo = (next: number) => {
     const keep = (lookup.state === 'idle' ? undefined : lookup.barcode) ?? carried;
     reset();
-    setMethod(next);
     setCarried(keep);
+    setStep(next);
+  };
+  const pickStatus = (next: Status) => {
+    setStatus(next);
+    goTo(1);
+  };
+  const pickMethod = (next: Method) => {
+    setMethod(next);
+    goTo(2);
   };
 
   const barcode = lookup.state === 'idle' ? undefined : lookup.barcode;
@@ -184,41 +195,73 @@ function Adder({ baseUrl }: Props) {
 
   return (
     <>
-      {lastHandoff && lookup.state === 'idle' && (
-        <Alert
-          type="info"
-          showIcon
-          closable
-          title="Saved it in the editor?"
-          description="Press Publish Changes there and it shows up on the site in a minute or two."
-        />
+      <Steps
+        current={step}
+        size="small"
+        responsive={false}
+        titlePlacement="vertical"
+        // Earlier steps can be clicked to change the answer.
+        onChange={(next) => next < step && goTo(next)}
+        items={[
+          { title: 'Where', content: step > 0 ? statusLabels[status] : undefined },
+          { title: 'How', content: step > 1 ? methodLabels[method].short : undefined },
+          { title: 'Find it' },
+        ]}
+      />
+
+      {step === 0 && (
+        <>
+          {lastHandoff && (
+            <Alert
+              type="info"
+              showIcon
+              closable
+              title="Saved it in the editor?"
+              description="Press Publish Changes there and it shows up on the site in a minute or two."
+            />
+          )}
+          <SectionTitle>Where does it go?</SectionTitle>
+          <Flex vertical gap={12}>
+            {(['collection', 'wishlist'] as const).map((option) => (
+              <Button
+                key={option}
+                size="large"
+                block
+                type={option === status ? 'primary' : 'default'}
+                icon={option === 'collection' ? <CheckCircleOutlined /> : <HeartOutlined />}
+                onClick={() => pickStatus(option)}
+              >
+                {option === 'collection' ? 'We have it: add it to the collection' : 'We want it: add it to the wishlist'}
+              </Button>
+            ))}
+          </Flex>
+        </>
       )}
 
-      <Segmented<Status>
-        block
-        size="large"
-        value={status}
-        onChange={setStatus}
-        options={[
-          { value: 'collection', label: 'We have it' },
-          { value: 'wishlist', label: 'We want it' },
-        ]}
-      />
+      {step === 1 && (
+        <>
+          <SectionTitle>How do you want to find it?</SectionTitle>
+          <Flex vertical gap={12}>
+            {(['scan', 'text', 'id'] as const).map((option) => (
+              <Button
+                key={option}
+                size="large"
+                block
+                type={option === method ? 'primary' : 'default'}
+                icon={methodLabels[option].icon}
+                onClick={() => pickMethod(option)}
+              >
+                {methodLabels[option].long}
+              </Button>
+            ))}
+            {/* Straight to the editor, for a CD MusicBrainz doesn't have. */}
+            <ByHand baseUrl={baseUrl} status={status} barcode={carried} />
+          </Flex>
+          {carried && <Typography.Text type="secondary">Barcode {carried} will still be saved with the album.</Typography.Text>}
+        </>
+      )}
 
-      <Tabs
-        activeKey={method}
-        onChange={(key) => choose(key as Method)}
-        centered
-        size="large"
-        style={{ marginBottom: -16 }}
-        items={[
-          { key: 'scan', label: 'Scan', icon: <ScanOutlined /> },
-          { key: 'text', label: 'Search', icon: <SearchOutlined /> },
-          { key: 'id', label: 'Link', icon: <LinkOutlined /> },
-        ]}
-      />
-
-      {lookup.state === 'idle' && (
+      {step === 2 && lookup.state === 'idle' && (
         <>
           {method === 'scan' && (
             <>
@@ -242,8 +285,8 @@ function Adder({ baseUrl }: Props) {
         </>
       )}
 
-      {/* Starts over in the same tab. A search that found nothing keeps its form below instead. */}
-      {lookup.state !== 'idle' && (method === 'scan' || candidates.length > 0) && (
+      {/* Starts over in this step. A search that found nothing keeps its form below instead. */}
+      {step === 2 && lookup.state !== 'idle' && (method === 'scan' || candidates.length > 0) && (
         <Button icon={method === 'scan' ? <ScanOutlined /> : <SearchOutlined />} size="large" onClick={reset}>
           {method === 'scan' ? 'Scan another CD' : 'New search'}
         </Button>
@@ -286,6 +329,7 @@ function Adder({ baseUrl }: Props) {
           method={method}
           onSearch={lookUpText(barcode)}
           onIdSearch={lookUpId(barcode)}
+          onOtherWay={() => goTo(1)}
         />
       )}
 
@@ -330,8 +374,6 @@ function Adder({ baseUrl }: Props) {
         />
       )}
 
-      {/* For a CD MusicBrainz doesn't have. Keeps what was scanned or typed. Gone once a match is picked. */}
-      {!draft && <ByHand baseUrl={baseUrl} status={status} barcode={barcode ?? carried} query={query} />}
 
       {draft && (
         // Stays in reach at the bottom of the screen, clear of the iPhone home bar.
@@ -545,6 +587,14 @@ function ByHand({
   );
 }
 
+const statusLabels: Record<Status, string> = { collection: 'Collection', wishlist: 'Wishlist' };
+
+const methodLabels: Record<Method, { short: string; long: string; icon: ReactNode }> = {
+  scan: { short: 'Scan', long: 'Scan the barcode', icon: <ScanOutlined /> },
+  text: { short: 'Search', long: 'Search by artist and title', icon: <SearchOutlined /> },
+  id: { short: 'Link', long: 'Paste a MusicBrainz link', icon: <LinkOutlined /> },
+};
+
 function NotFound({
   barcode,
   query,
@@ -552,6 +602,7 @@ function NotFound({
   method,
   onSearch,
   onIdSearch,
+  onOtherWay,
 }: {
   barcode?: string;
   query?: Query;
@@ -559,16 +610,24 @@ function NotFound({
   method: Method;
   onSearch: (query: Query) => void;
   onIdSearch: (releaseId: string) => void;
+  onOtherWay: () => void;
 }) {
   const searched = query && [query.artist, query.title].filter(Boolean).join(' – ');
   const [title, description] = releaseId
     ? ['No release with that id on MusicBrainz', 'Copy the link from the release page itself (musicbrainz.org/release/…).']
     : searched
       ? [`No CDs found for “${searched}”`, 'Check the spelling, or leave out words you are unsure of.']
-      : [`No CDs found for barcode ${barcode}`, 'Try Search or Link above. The barcode is kept.'];
+      : [`No CDs found for barcode ${barcode}`, 'Search another way or fill it in by hand. The barcode is kept.'];
   return (
     <>
-      <Alert type="warning" showIcon title={title} description={description} />
+      <Alert
+        type="warning"
+        showIcon
+        title={title}
+        description={description}
+        // Back to the "How" step, where the other ways and "Fill it in by hand" are.
+        action={<Button onClick={onOtherWay}>Try another way</Button>}
+      />
       {barcode && (searched || releaseId) && (
         <Typography.Text type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Text>
       )}
