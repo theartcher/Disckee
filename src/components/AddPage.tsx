@@ -192,6 +192,7 @@ function Adder({ baseUrl }: Props) {
             }}
           />
           <TextSearch onSearch={lookUpText(undefined)} />
+          <ByHand baseUrl={baseUrl} status={status} />
         </>
       ) : (
         <Button icon={<ScanOutlined />} size="large" onClick={reset}>
@@ -245,6 +246,7 @@ function Adder({ baseUrl }: Props) {
               ))}
             </Flex>
           </Radio.Group>
+          <ByHand baseUrl={baseUrl} status={status} barcode={barcode} query={query} label="None of these? Fill it in by hand" />
         </>
       )}
 
@@ -465,10 +467,38 @@ function TextSearch({
       >
         <Input size="large" autoComplete="off" />
       </Form.Item>
-      <Button htmlType="submit" size="large" icon={<SearchOutlined />}>
+      <Button type="primary" htmlType="submit" size="large" block icon={<SearchOutlined />}>
         Search MusicBrainz
       </Button>
     </Form>
+  );
+}
+
+/** Opens the editor without a MusicBrainz match, keeping whatever was scanned or typed. */
+function ByHand({
+  baseUrl,
+  status,
+  barcode,
+  query,
+  label = 'Fill it in by hand',
+}: {
+  baseUrl: string;
+  status: Status;
+  barcode?: string;
+  query?: Query;
+  label?: string;
+}) {
+  const draft: Draft = {
+    status,
+    barcode,
+    artist: query?.artist || undefined,
+    title: query?.title || undefined,
+    coverCredit: 'own-photo',
+  };
+  return (
+    <Button size="large" block icon={<EditOutlined />} href={newAlbumUrl(baseUrl, draft)} onClick={() => rememberHandoff(draft)}>
+      {label}
+    </Button>
   );
 }
 
@@ -485,13 +515,6 @@ function NotFound({
   status: Status;
   onSearch: (query: Query) => void;
 }) {
-  const draft: Draft = {
-    status,
-    barcode,
-    artist: query?.artist || undefined,
-    title: query?.title || undefined,
-    coverCredit: 'own-photo',
-  };
   const searched = query && [query.artist, query.title].filter(Boolean).join(' – ');
   return (
     <Card>
@@ -510,15 +533,9 @@ function NotFound({
         <Typography.Paragraph type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Paragraph>
       )}
       <TextSearch onSearch={onSearch} initialValues={query} initiallyOpen />
-      <Button
-        type="link"
-        icon={<EditOutlined />}
-        href={newAlbumUrl(baseUrl, draft)}
-        onClick={() => rememberHandoff(draft)}
-        style={{ paddingInline: 0, marginTop: 16 }}
-      >
-        Fill it in by hand
-      </Button>
+      <div style={{ marginTop: 16 }}>
+        <ByHand baseUrl={baseUrl} status={status} barcode={barcode} query={query} />
+      </div>
     </Card>
   );
 }
