@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Segmented, Spin, Tag, Typography, theme } from 'antd';
-import { EditOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, EditOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import Scanner from './Scanner';
 import {
@@ -39,6 +39,9 @@ interface Query {
   artist: string;
   title: string;
 }
+
+/** How the CD is found: picked first, then only that way is shown. */
+type Method = 'scan' | 'text' | 'id';
 
 /** What a lookup went by: a scanned barcode, typed artist/title, or a pasted release id. */
 interface Search {
@@ -94,6 +97,9 @@ export default function AddPage({ baseUrl }: Props) {
 function Adder({ baseUrl }: Props) {
   const { token } = theme.useToken();
   const [status, setStatus] = useState<Status>('collection');
+  const [method, setMethod] = useState<Method>();
+  // A barcode that was scanned but not found, kept when switching to another way.
+  const [carried, setCarried] = useState<string>();
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
   const [selected, setSelected] = useState<string>();
   const [known, setKnown] = useState<Known[]>([]);
@@ -144,6 +150,12 @@ function Adder({ baseUrl }: Props) {
     abort.current?.abort();
     setLookup({ state: 'idle' });
     setSelected(undefined);
+    setCarried(undefined);
+  };
+  const choose = (next: Method | undefined, keepBarcode?: string) => {
+    reset();
+    setMethod(next);
+    setCarried(keepBarcode);
   };
 
   const barcode = lookup.state === 'idle' ? undefined : lookup.barcode;
@@ -171,7 +183,7 @@ function Adder({ baseUrl }: Props) {
 
   return (
     <>
-      {lastHandoff && lookup.state === 'idle' && (
+      {lastHandoff && !method && (
         <Alert
           type="info"
           showIcon
@@ -192,27 +204,41 @@ function Adder({ baseUrl }: Props) {
         ]}
       />
 
-      {lookup.state === 'idle' ? (
+      {method && (
+        <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => choose(undefined)} style={{ alignSelf: 'flex-start', paddingInline: 0 }}>
+          Other ways to add a CD
+        </Button>
+      )}
+
+      {!method && <ChooseMethod baseUrl={baseUrl} status={status} onChoose={choose} />}
+
+      {method && lookup.state === 'idle' && (
         <>
-          <Scanner onDetected={lookUpBarcode} />
-          <Input.Search
-            size="large"
-            inputMode="numeric"
-            placeholder="Or type the barcode"
-            enterButton="Look up"
-            aria-label="Barcode"
-            onSearch={(value) => {
-              const code = value.replaceAll(/\D/g, '');
-              if (isBarcode(code)) void lookUpBarcode(code);
-            }}
-          />
-          <TextSearch onSearch={lookUpText(undefined)} />
-          <IdSearch onSearch={lookUpId(undefined)} />
-          <ByHand baseUrl={baseUrl} status={status} />
+          {method === 'scan' && (
+            <>
+              <Scanner onDetected={lookUpBarcode} />
+              <Input.Search
+                size="large"
+                inputMode="numeric"
+                placeholder="Or type the barcode"
+                enterButton="Look up"
+                aria-label="Barcode"
+                onSearch={(value) => {
+                  const code = value.replaceAll(/\D/g, '');
+                  if (isBarcode(code)) void lookUpBarcode(code);
+                }}
+              />
+            </>
+          )}
+          {method === 'text' && <TextSearch onSearch={lookUpText(carried)} />}
+          {method === 'id' && <IdSearch onSearch={lookUpId(carried)} />}
+          {carried && <Typography.Text type="secondary">Barcode {carried} will still be saved with the album.</Typography.Text>}
         </>
-      ) : (
-        <Button icon={<ScanOutlined />} size="large" onClick={reset}>
-          Scan another CD
+      )}
+
+      {method && lookup.state !== 'idle' && (
+        <Button icon={method === 'scan' ? <ScanOutlined /> : <SearchOutlined />} size="large" onClick={reset}>
+          {method === 'scan' ? 'Scan another CD' : 'Look up another CD'}
         </Button>
       )}
 
@@ -252,8 +278,10 @@ function Adder({ baseUrl }: Props) {
           query={query}
           releaseId={releaseId}
           status={status}
+          method={method ?? 'scan'}
           onSearch={lookUpText(barcode)}
           onIdSearch={lookUpId(barcode)}
+          onChoose={(next) => choose(next, barcode)}
         />
       )}
 
@@ -450,23 +478,7 @@ function CandidateCard({ candidate, selected }: { candidate: Candidate; selected
   );
 }
 
-function TextSearch({
-  onSearch,
-  initialValues,
-  initiallyOpen = false,
-}: {
-  onSearch: (query: Query) => void;
-  initialValues?: Query;
-  initiallyOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(initiallyOpen);
-  if (!open) {
-    return (
-      <Button type="link" icon={<SearchOutlined />} onClick={() => setOpen(true)} style={{ alignSelf: 'flex-start', paddingInline: 0 }}>
-        No barcode? Search by artist and title
-      </Button>
-    );
-  }
+function TextSearch({ onSearch, initialValues }: { onSearch: (query: Query) => void; initialValues?: Query }) {
   return (
     <Form
       layout="vertical"
@@ -533,43 +545,46 @@ function NotFound({
   query,
   releaseId,
   status,
+  method,
   onSearch,
   onIdSearch,
+  onChoose,
 }: {
   baseUrl: string;
   barcode?: string;
   query?: Query;
   releaseId?: string;
   status: Status;
+  method: Method;
   onSearch: (query: Query) => void;
   onIdSearch: (releaseId: string) => void;
+  onChoose: (method: Method) => void;
 }) {
   const searched = query && [query.artist, query.title].filter(Boolean).join(' – ');
   const [title, description] = releaseId
     ? ['No release with that id on MusicBrainz', 'Copy the link from the release page itself (musicbrainz.org/release/…).']
     : searched
-      ? [
-          `No CDs found for “${searched}”`,
-          'Check the spelling, or leave out words you are unsure of. Or fill it in by hand and add a photo of the cover.',
-        ]
-      : [
-          `No CDs found for barcode ${barcode}`,
-          'Search by artist and title instead, or fill it in by hand and add a photo of the cover.',
-        ];
+      ? [`No CDs found for “${searched}”`, 'Check the spelling, or leave out words you are unsure of.']
+      : [`No CDs found for barcode ${barcode}`, 'Try one of these instead. The barcode will still be saved with the album.'];
   return (
     <Card>
-      <Alert type="warning" showIcon title={title} description={description} style={{ marginBottom: 16 }} />
-      {barcode && (searched || releaseId) && (
-        <Typography.Paragraph type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Paragraph>
-      )}
       <Flex vertical gap={16}>
-        {releaseId ? (
-          <IdSearch onSearch={onIdSearch} initialValue={releaseId} initiallyOpen />
-        ) : (
-          <>
-            <TextSearch onSearch={onSearch} initialValues={query} initiallyOpen />
-            <IdSearch onSearch={onIdSearch} />
-          </>
+        <Alert type="warning" showIcon title={title} description={description} />
+        {barcode && (searched || releaseId) && (
+          <Typography.Text type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Text>
+        )}
+        {method === 'text' && <TextSearch onSearch={onSearch} initialValues={query} />}
+        {method === 'id' && <IdSearch onSearch={onIdSearch} initialValue={releaseId} />}
+        {method !== 'scan' && <Typography.Text type="secondary">Or try another way:</Typography.Text>}
+        {method !== 'text' && (
+          <Button size="large" block icon={<SearchOutlined />} onClick={() => onChoose('text')}>
+            {methodLabels.text}
+          </Button>
+        )}
+        {method !== 'id' && (
+          <Button size="large" block icon={<LinkOutlined />} onClick={() => onChoose('id')}>
+            {methodLabels.id}
+          </Button>
         )}
         <ByHand baseUrl={baseUrl} status={status} barcode={barcode} query={query} />
       </Flex>
@@ -577,25 +592,33 @@ function NotFound({
   );
 }
 
-/** For a release that's on MusicBrainz but the searches miss: paste its link (or id). */
-function IdSearch({
-  onSearch,
-  initialValue,
-  initiallyOpen = false,
-}: {
-  onSearch: (releaseId: string) => void;
-  initialValue?: string;
-  initiallyOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(initiallyOpen);
-  const [invalid, setInvalid] = useState(false);
-  if (!open) {
-    return (
-      <Button type="link" icon={<LinkOutlined />} onClick={() => setOpen(true)} style={{ alignSelf: 'flex-start', paddingInline: 0 }}>
-        Found it on MusicBrainz? Paste the link
+const methodLabels: Record<Method, string> = {
+  scan: 'Scan the barcode',
+  text: 'Search by artist and title',
+  id: 'Paste a MusicBrainz link',
+};
+
+/** The first step: how to find the CD. Scanning is the usual way, so it's the primary one. */
+function ChooseMethod({ baseUrl, status, onChoose }: { baseUrl: string; status: Status; onChoose: (method: Method) => void }) {
+  return (
+    <Flex vertical gap={12}>
+      <Button type="primary" size="large" block icon={<ScanOutlined />} onClick={() => onChoose('scan')}>
+        {methodLabels.scan}
       </Button>
-    );
-  }
+      <Button size="large" block icon={<SearchOutlined />} onClick={() => onChoose('text')}>
+        {methodLabels.text}
+      </Button>
+      <Button size="large" block icon={<LinkOutlined />} onClick={() => onChoose('id')}>
+        {methodLabels.id}
+      </Button>
+      <ByHand baseUrl={baseUrl} status={status} />
+    </Flex>
+  );
+}
+
+/** For a release that's on MusicBrainz but the searches miss: paste its link (or id). */
+function IdSearch({ onSearch, initialValue }: { onSearch: (releaseId: string) => void; initialValue?: string }) {
+  const [invalid, setInvalid] = useState(false);
   return (
     <Form layout="vertical">
       <Form.Item
