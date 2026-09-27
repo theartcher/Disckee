@@ -36,7 +36,7 @@ export default function CoverImage({ cover, alt, sizes, eager, radius = 0 }: Pro
   return (
     <img
       src={cover.src}
-      srcSet={cover.srcSet}
+      srcSet={cover.srcSet || undefined}
       sizes={sizes}
       alt={`Cover of ${alt}`}
       loading={eager ? 'eager' : 'lazy'}

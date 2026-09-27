@@ -35,8 +35,13 @@ export interface AlbumCard {
 }
 
 async function coverImage(album: Album, widths: number[]): Promise<CoverImage | undefined> {
-  if (!album.data.cover) return undefined;
-  const image = await getImage({ src: album.data.cover, widths, format: 'webp' });
+  const { cover } = album.data;
+  if (!cover) return undefined;
+  // A cover prefilled by /add is a Cover Art Archive URL until the deploy's
+  // enrichment step downloads it (pull request builds skip that step).
+  // Shown as-is rather than resized, so the build never depends on fetching it.
+  if (typeof cover === 'string') return { src: cover, srcSet: '' };
+  const image = await getImage({ src: cover, widths, format: 'webp' });
   return { src: image.src, srcSet: image.srcSet.attribute };
 }
 
