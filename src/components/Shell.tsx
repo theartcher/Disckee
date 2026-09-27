@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Button, ConfigProvider, Flex, Grid, Layout, Menu, Tooltip, Typography, theme } from 'antd';
+import { Button, ConfigProvider, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
 import { MoonOutlined, SettingOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
@@ -17,6 +17,22 @@ interface Props {
   baseUrl: string;
   section: Section | 'home' | 'add' | 'suggestions' | 'manage' | 'stats';
   children: ReactNode;
+}
+
+/**
+ * Whether the window is at least antd's "sm" breakpoint. Read synchronously, unlike Grid.useBreakpoint(),
+ * which is empty on the first render and made the desktop header start in its phone layout.
+ */
+function useWide() {
+  const query = '(min-width: 576px)';
+  const [wide, setWide] = useState(() => matchMedia(query).matches);
+  useEffect(() => {
+    const list = matchMedia(query);
+    const update = () => setWide(list.matches);
+    list.addEventListener('change', update);
+    return () => list.removeEventListener('change', update);
+  }, []);
+  return wide;
 }
 
 /** Page frame: Ant Design theme (light/dark), header with nav and theme toggle. */
@@ -52,7 +68,7 @@ function Frame({
   children,
 }: Props & { mode: Mode; onToggle: () => void }) {
   const { token } = theme.useToken();
-  const screens = Grid.useBreakpoint();
+  const screens = { sm: useWide() };
   const owners = section === 'add' || section === 'suggestions' || section === 'manage';
 
   return (
@@ -93,8 +109,9 @@ function Frame({
           {/* The owners' tools live on one panel page, so the nav still fits on a phone. */}
           <Tooltip title="Owners' panel">
             <Button
-              type={owners ? 'primary' : 'text'}
-              ghost={owners}
+              type="text"
+              // Highlighted like the selected menu item, not as a filled button.
+              style={owners ? { color: token.colorPrimary } : undefined}
               shape="circle"
               aria-label="Owners' panel"
               href={`${baseUrl}/manage/`}

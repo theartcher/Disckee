@@ -25,7 +25,7 @@ export default function Shelf({ title, albums, caption }: Props) {
             href={album.href}
             style={{ flex: '0 0 132px', scrollSnapAlign: 'start', color: 'inherit', minWidth: 0 }}
           >
-            <CoverImage cover={album.cover} alt={`${album.title} by ${album.artist}`} sizes="132px" radius={6} iconSize={36} />
+            <CoverImage cover={album.cover} alt={`${album.title} by ${album.artist}`} sizes="132px" radius="lg" iconSize={36} />
             <Typography.Text strong ellipsis style={{ display: 'block', marginTop: 6 }}>
               {album.title}
             </Typography.Text>

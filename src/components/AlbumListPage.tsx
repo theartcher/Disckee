@@ -266,7 +266,7 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
             <List.Item key={album.id} extra={shareItem(album)}>
               <a href={album.href} style={{ display: 'flex', gap: 12, alignItems: 'center', minWidth: 0, flex: 1, color: 'inherit' }}>
                 <div style={{ width: 56, flex: 'none' }}>
-                  <CoverImage cover={album.cover} alt={`${album.title} by ${album.artist}`} sizes="56px" radius={4} iconSize={24} />
+                  <CoverImage cover={album.cover} alt={`${album.title} by ${album.artist}`} sizes="56px" radius="sm" iconSize={24} />
                 </div>
                 <Flex vertical style={{ minWidth: 0 }}>
                   <Typography.Text strong ellipsis>

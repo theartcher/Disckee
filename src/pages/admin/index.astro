@@ -28,10 +28,11 @@ const enabled = Boolean(authUrl) || import.meta.env.DEV;
         gap: 8px;
       }
       #back a {
-        padding: 8px 14px;
+        /* Looks like an antd button, like the rest of the site. */
+        padding: 7px 15px;
         border: 1px solid #1677ff;
-        border-radius: 999px;
-        font: 500 14px/1.2 system-ui, sans-serif;
+        border-radius: 6px;
+        font: 400 14px/1.5714 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         text-decoration: none;
         color: #fff;
         background: #1677ff;
@@ -41,6 +42,13 @@ const enabled = Boolean(authUrl) || import.meta.env.DEV;
         border-color: #d9d9d9;
         color: rgb(0 0 0 / 88%);
         background: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        #back a.secondary {
+          border-color: #424242;
+          color: rgb(255 255 255 / 85%);
+          background: #141414;
+        }
       }
     </style>
   </head>
