@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# A newer push cancels the run still going for the same branch, so several
+# quick saves from /admin end in one deploy of the latest version.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 # typecheck, lint and build are the required checks for merging into main.
 jobs:
