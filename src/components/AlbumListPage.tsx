@@ -40,7 +40,10 @@ const owners = [
   { value: 'marlou', label: 'Marlou' },
 ] as const;
 type Owner = (typeof owners)[number]['value'];
-const ownerTitles = { shared: 'Shared CDs', arthur: "Arthur's CDs", marlou: "Marlou's CDs" } as const;
+const ownerTitles = {
+  collection: { shared: 'Shared CDs', arthur: "Arthur's CDs", marlou: "Marlou's CDs" },
+  wishlist: { shared: 'Shared wishlist', arthur: "Arthur's wishlist", marlou: "Marlou's wishlist" },
+} as const;
 
 const byText = (a = '', b = '') => a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true });
 const sorts = {
@@ -122,6 +125,9 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
   }, [albums, fuse, query, owner, sort]);
 
   const filtered = query.trim() !== '' || owner !== 'all';
+  const ownerTitle = owner === 'all' ? undefined : ownerTitles[section][owner];
+  // Sharing one person's wishlist shares just their part of it.
+  const pageShare = share && ownerTitle ? { ...share, href: `${share.href}?owner=${owner}`, title: ownerTitle } : share;
   const recent = useMemo(() => albums.toSorted(sorts.added.compare).slice(0, 10), [albums]);
   const favorites = useMemo(() => albums.filter((album) => album.favorite), [albums]);
   const shareItem = (album: AlbumCard) =>
@@ -138,12 +144,12 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
     <Shell baseUrl={baseUrl} section={section}>
       <Flex align="center" justify="space-between" gap={16} wrap>
         <Typography.Title level={2} style={{ margin: 0 }}>
-          {section === 'collection' && owner !== 'all' ? ownerTitles[owner] : title}
+          {ownerTitle ?? title}
         </Typography.Title>
-        {share && albums.length > 0 && <ShareButton {...share} label="Share" />}
+        {pageShare && albums.length > 0 && <ShareButton {...pageShare} label="Share" />}
       </Flex>
       <Typography.Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 16 }}>
-        {section === 'collection' && owner !== 'all' ? null : subtitle}
+        {section === 'collection' && ownerTitle ? null : subtitle}
       </Typography.Paragraph>
 
       {home && !filtered && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
