@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Segmented, Spin, Tag, Typography, theme } from 'antd';
-import { ArrowLeftOutlined, EditOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Segmented, Spin, Tabs, Tag, Typography, theme } from 'antd';
+import { EditOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import Scanner from './Scanner';
 import {
@@ -40,7 +40,7 @@ interface Query {
   title: string;
 }
 
-/** How the CD is found: picked first, then only that way is shown. */
+/** How the CD is found: one tab each. */
 type Method = 'scan' | 'text' | 'id';
 
 /** What a lookup went by: a scanned barcode, typed artist/title, or a pasted release id. */
@@ -97,8 +97,8 @@ export default function AddPage({ baseUrl }: Props) {
 function Adder({ baseUrl }: Props) {
   const { token } = theme.useToken();
   const [status, setStatus] = useState<Status>('collection');
-  const [method, setMethod] = useState<Method>();
-  // A barcode that was scanned but not found, kept when switching to another way.
+  const [method, setMethod] = useState<Method>('scan');
+  // A barcode that was scanned but not found, kept when switching to another tab.
   const [carried, setCarried] = useState<string>();
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
   const [selected, setSelected] = useState<string>();
@@ -152,10 +152,11 @@ function Adder({ baseUrl }: Props) {
     setSelected(undefined);
     setCarried(undefined);
   };
-  const choose = (next: Method | undefined, keepBarcode?: string) => {
+  const choose = (next: Method) => {
+    const keep = (lookup.state === 'idle' ? undefined : lookup.barcode) ?? carried;
     reset();
     setMethod(next);
-    setCarried(keepBarcode);
+    setCarried(keep);
   };
 
   const barcode = lookup.state === 'idle' ? undefined : lookup.barcode;
@@ -183,7 +184,7 @@ function Adder({ baseUrl }: Props) {
 
   return (
     <>
-      {lastHandoff && !method && (
+      {lastHandoff && lookup.state === 'idle' && (
         <Alert
           type="info"
           showIcon
@@ -204,15 +205,20 @@ function Adder({ baseUrl }: Props) {
         ]}
       />
 
-      {method && (
-        <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => choose(undefined)} style={{ alignSelf: 'flex-start', paddingInline: 0 }}>
-          Other ways to add a CD
-        </Button>
-      )}
+      <Tabs
+        activeKey={method}
+        onChange={(key) => choose(key as Method)}
+        centered
+        size="large"
+        style={{ marginBottom: -16 }}
+        items={[
+          { key: 'scan', label: 'Scan', icon: <ScanOutlined /> },
+          { key: 'text', label: 'Search', icon: <SearchOutlined /> },
+          { key: 'id', label: 'Link', icon: <LinkOutlined /> },
+        ]}
+      />
 
-      {!method && <ChooseMethod baseUrl={baseUrl} status={status} onChoose={choose} />}
-
-      {method && lookup.state === 'idle' && (
+      {lookup.state === 'idle' && (
         <>
           {method === 'scan' && (
             <>
@@ -236,9 +242,10 @@ function Adder({ baseUrl }: Props) {
         </>
       )}
 
-      {method && lookup.state !== 'idle' && (
+      {/* Starts over in the same tab. A search that found nothing keeps its form below instead. */}
+      {lookup.state !== 'idle' && (method === 'scan' || candidates.length > 0) && (
         <Button icon={method === 'scan' ? <ScanOutlined /> : <SearchOutlined />} size="large" onClick={reset}>
-          {method === 'scan' ? 'Scan another CD' : 'Look up another CD'}
+          {method === 'scan' ? 'Scan another CD' : 'New search'}
         </Button>
       )}
 
@@ -273,15 +280,12 @@ function Adder({ baseUrl }: Props) {
 
       {lookup.state === 'done' && candidates.length === 0 && (
         <NotFound
-          baseUrl={baseUrl}
           barcode={barcode}
           query={query}
           releaseId={releaseId}
-          status={status}
-          method={method ?? 'scan'}
+          method={method}
           onSearch={lookUpText(barcode)}
           onIdSearch={lookUpId(barcode)}
-          onChoose={(next) => choose(next, barcode)}
         />
       )}
 
@@ -299,7 +303,6 @@ function Adder({ baseUrl }: Props) {
               ))}
             </Flex>
           </Radio.Group>
-          <ByHand baseUrl={baseUrl} status={status} barcode={barcode} query={query} label="None of these? Fill it in by hand" />
         </>
       )}
 
@@ -326,6 +329,9 @@ function Adder({ baseUrl }: Props) {
           }
         />
       )}
+
+      {/* For a CD MusicBrainz doesn't have. Keeps what was scanned or typed. Gone once a match is picked. */}
+      {!draft && <ByHand baseUrl={baseUrl} status={status} barcode={barcode ?? carried} query={query} />}
 
       {draft && (
         // Stays in reach at the bottom of the screen, clear of the iPhone home bar.
@@ -540,79 +546,35 @@ function ByHand({
 }
 
 function NotFound({
-  baseUrl,
   barcode,
   query,
   releaseId,
-  status,
   method,
   onSearch,
   onIdSearch,
-  onChoose,
 }: {
-  baseUrl: string;
   barcode?: string;
   query?: Query;
   releaseId?: string;
-  status: Status;
   method: Method;
   onSearch: (query: Query) => void;
   onIdSearch: (releaseId: string) => void;
-  onChoose: (method: Method) => void;
 }) {
   const searched = query && [query.artist, query.title].filter(Boolean).join(' – ');
   const [title, description] = releaseId
     ? ['No release with that id on MusicBrainz', 'Copy the link from the release page itself (musicbrainz.org/release/…).']
     : searched
       ? [`No CDs found for “${searched}”`, 'Check the spelling, or leave out words you are unsure of.']
-      : [`No CDs found for barcode ${barcode}`, 'Try one of these instead. The barcode will still be saved with the album.'];
+      : [`No CDs found for barcode ${barcode}`, 'Try Search or Link above. The barcode is kept.'];
   return (
-    <Card>
-      <Flex vertical gap={16}>
-        <Alert type="warning" showIcon title={title} description={description} />
-        {barcode && (searched || releaseId) && (
-          <Typography.Text type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Text>
-        )}
-        {method === 'text' && <TextSearch onSearch={onSearch} initialValues={query} />}
-        {method === 'id' && <IdSearch onSearch={onIdSearch} initialValue={releaseId} />}
-        {method !== 'scan' && <Typography.Text type="secondary">Or try another way:</Typography.Text>}
-        {method !== 'text' && (
-          <Button size="large" block icon={<SearchOutlined />} onClick={() => onChoose('text')}>
-            {methodLabels.text}
-          </Button>
-        )}
-        {method !== 'id' && (
-          <Button size="large" block icon={<LinkOutlined />} onClick={() => onChoose('id')}>
-            {methodLabels.id}
-          </Button>
-        )}
-        <ByHand baseUrl={baseUrl} status={status} barcode={barcode} query={query} />
-      </Flex>
-    </Card>
-  );
-}
-
-const methodLabels: Record<Method, string> = {
-  scan: 'Scan the barcode',
-  text: 'Search by artist and title',
-  id: 'Paste a MusicBrainz link',
-};
-
-/** The first step: how to find the CD. Scanning is the usual way, so it's the primary one. */
-function ChooseMethod({ baseUrl, status, onChoose }: { baseUrl: string; status: Status; onChoose: (method: Method) => void }) {
-  return (
-    <Flex vertical gap={12}>
-      <Button type="primary" size="large" block icon={<ScanOutlined />} onClick={() => onChoose('scan')}>
-        {methodLabels.scan}
-      </Button>
-      <Button size="large" block icon={<SearchOutlined />} onClick={() => onChoose('text')}>
-        {methodLabels.text}
-      </Button>
-      <Button size="large" block icon={<LinkOutlined />} onClick={() => onChoose('id')}>
-        {methodLabels.id}
-      </Button>
-      <ByHand baseUrl={baseUrl} status={status} />
-    </Flex>
+    <>
+      <Alert type="warning" showIcon title={title} description={description} />
+      {barcode && (searched || releaseId) && (
+        <Typography.Text type="secondary">Barcode {barcode} will still be saved with the album.</Typography.Text>
+      )}
+      {method === 'text' && <TextSearch onSearch={onSearch} initialValues={query} />}
+      {method === 'id' && <IdSearch onSearch={onIdSearch} initialValue={releaseId} />}
+    </>
   );
 }
 
