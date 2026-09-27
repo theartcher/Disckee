@@ -18,7 +18,7 @@ interface Props {
   /** Adds share buttons for the page and for each album. */
   share?: { href: string; title: string; text: string };
   empty?: string;
-  /** The home page: adds the "Recently added" and favourites shelves and a random pick. */
+  /** The home page: adds the "Latest additions" and favourites shelves and a random pick. */
   home?: boolean;
 }
 
@@ -44,7 +44,7 @@ const ownerTitles = { shared: 'Shared CDs', arthur: "Arthur's CDs", marlou: "Mar
 
 const byText = (a = '', b = '') => a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true });
 const sorts = {
-  added: { label: 'Recently added', compare: (a: AlbumCard, b: AlbumCard) => b.addedAt.localeCompare(a.addedAt) },
+  added: { label: 'Latest additions', compare: (a: AlbumCard, b: AlbumCard) => b.addedAt.localeCompare(a.addedAt) },
   title: { label: 'Title (A–Z)', compare: (a: AlbumCard, b: AlbumCard) => byText(a.title, b.title) },
   artist: {
     label: 'Artist (A–Z)',
@@ -146,7 +146,7 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
         {section === 'collection' && owner !== 'all' ? null : subtitle}
       </Typography.Paragraph>
 
-      {home && !filtered && recent.length > 0 && <Shelf title="Recently added" albums={recent} caption={addedCaption} />}
+      {home && !filtered && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
       {home && !filtered && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
 
       {albums.length > 0 && (
