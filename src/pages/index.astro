@@ -17,6 +17,7 @@ const allTiles: Tile[] = [
   { href: `${baseUrl}/collection/?owner=marlou`, title: "Marlou's CDs", caption: plural(owned('marlou').length, 'CD'), covers: await covers(owned('marlou')) },
   { href: `${baseUrl}/collection/?owner=shared`, title: 'Shared CDs', caption: plural(owned('shared').length, 'CD'), covers: await covers(owned('shared')) },
   { href: `${baseUrl}/wishlist/`, title: 'Wishlist', caption: plural(wishlist.length, 'CD'), covers: await covers(wishlist), icon: 'wishlist' },
+  { href: `${baseUrl}/stats/`, title: 'Stats', caption: 'Our shelf in numbers', covers: [], icon: 'stats' },
 ];
 // An owner's tile with no CDs yet would be an empty square.
 const tiles = allTiles.filter((tile) => tile.caption !== '0 CDs' || tile.icon);

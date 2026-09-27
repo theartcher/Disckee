@@ -1,5 +1,5 @@
 import { Card, Col, Row, Typography, theme } from 'antd';
-import { CustomerServiceOutlined, HeartOutlined, SettingOutlined } from '@ant-design/icons';
+import { BarChartOutlined, CustomerServiceOutlined, HeartOutlined, SettingOutlined } from '@ant-design/icons';
 import { ToolCards, ownerTools } from './ManagePage';
 import Shell from './Shell';
 import type { CoverImage } from '../lib/albums';
@@ -10,10 +10,10 @@ export interface Tile {
   caption: string;
   /** Up to four covers, shown as a 2×2 mosaic. */
   covers: CoverImage[];
-  icon?: 'wishlist';
+  icon?: 'wishlist' | 'stats';
 }
 
-const icons = { wishlist: <HeartOutlined /> };
+const icons = { wishlist: <HeartOutlined />, stats: <BarChartOutlined /> };
 
 function Mosaic({ tile }: { tile: Tile }) {
   const { token } = theme.useToken();

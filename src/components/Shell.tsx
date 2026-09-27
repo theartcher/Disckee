@@ -15,7 +15,7 @@ function initialMode(): Mode {
 
 interface Props {
   baseUrl: string;
-  section: Section | 'home' | 'add' | 'suggestions' | 'manage';
+  section: Section | 'home' | 'add' | 'suggestions' | 'manage' | 'stats';
   children: ReactNode;
 }
 

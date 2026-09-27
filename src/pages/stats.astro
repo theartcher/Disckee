@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import StatsPage from '../components/StatsPage';
+import { albumsByStatus, baseUrl } from '../lib/albums';
+import { collectionStats } from '../lib/stats';
+
+const stats = collectionStats(await albumsByStatus('collection'), await albumsByStatus('wishlist'), baseUrl);
+---
+
+<Base title="Stats">
+  <StatsPage client:only="react" baseUrl={baseUrl} stats={stats} />
+</Base>
