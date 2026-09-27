@@ -7,6 +7,7 @@ year: 2026
 label: Joris Brugman
 owner: marlou
 favorite: false
+cover: ../../assets/covers/IMG_4409.webp
 coverCredit: own-photo
 tracklist:
   - position: '1'
