@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Button, ConfigProvider, Dropdown, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
-import { EditOutlined, MoonOutlined, ScanOutlined, SunOutlined } from '@ant-design/icons';
+import { Button, ConfigProvider, Flex, Layout, Menu, Tooltip, Typography, theme } from 'antd';
+import { MoonOutlined, SettingOutlined, SunOutlined } from '@ant-design/icons';
 import type { Section } from '../lib/albums';
 
 type Mode = 'light' | 'dark';
@@ -15,7 +15,7 @@ function initialMode(): Mode {
 
 interface Props {
   baseUrl: string;
-  section: Section | 'add';
+  section: Section | 'home' | 'add' | 'suggestions' | 'manage';
   children: ReactNode;
 }
 
@@ -52,6 +52,7 @@ function Frame({
   children,
 }: Props & { mode: Mode; onToggle: () => void }) {
   const { token } = theme.useToken();
+  const owners = section === 'add' || section === 'suggestions' || section === 'manage';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -74,24 +75,21 @@ function Frame({
             selectedKeys={[section]}
             style={{ flex: 1, minWidth: 0, borderBottom: 'none', background: 'transparent' }}
             items={[
-              { key: 'collection', label: <a href={`${baseUrl}/`}>Collection</a> },
+              { key: 'collection', label: <a href={`${baseUrl}/collection/`}>Collection</a> },
               { key: 'wishlist', label: <a href={`${baseUrl}/wishlist/`}>Wishlist</a> },
             ]}
           />
-          {/* One button for the owners' tools, so the nav still fits on a phone. */}
-          <Dropdown
-            trigger={['click']}
-            placement="bottomRight"
-            menu={{
-              selectedKeys: section === 'add' ? ['add'] : [],
-              items: [
-                { key: 'add', icon: <ScanOutlined />, label: <a href={`${baseUrl}/add/`}>Add a CD</a> },
-                { key: 'admin', icon: <EditOutlined />, label: <a href={`${baseUrl}/admin/`}>Edit albums</a> },
-              ],
-            }}
-          >
-            <Button type="text" shape="circle" aria-label="Add or edit albums" icon={<EditOutlined />} />
-          </Dropdown>
+          {/* The owners' tools live on one panel page, so the nav still fits on a phone. */}
+          <Tooltip title="Owners' panel">
+            <Button
+              type={owners ? 'primary' : 'text'}
+              ghost={owners}
+              shape="circle"
+              aria-label="Owners' panel"
+              href={`${baseUrl}/manage/`}
+              icon={<SettingOutlined />}
+            />
+          </Tooltip>
           <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
             <Button
               type="text"

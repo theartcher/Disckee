@@ -35,6 +35,8 @@ export interface AlbumCard {
   /** For the in-browser search, sorting and owner views. */
   owner: Album['data']['owner'];
   addedAt: string;
+  addedBy?: Album['data']['addedBy'];
+  favorite: boolean;
   label?: string;
   genres: string[];
   tracks: string[];
@@ -62,13 +64,15 @@ export async function toCard(album: Album): Promise<AlbumCard> {
     owner: album.data.owner,
     // Wishlist CDs that arrived count as added the day they arrived.
     addedAt: (album.data.acquiredAt ?? album.data.addedAt).toISOString(),
+    addedBy: album.data.addedBy,
+    favorite: album.data.favorite,
     label: album.data.label,
     genres: album.data.genres,
     tracks: album.data.tracklist.map((track) => track.title),
   };
 }
 
-export interface AlbumDetail extends Omit<AlbumCard, 'owner' | 'addedAt'> {
+export interface AlbumDetail extends Omit<AlbumCard, 'owner' | 'addedAt' | 'addedBy'> {
   status: Section;
   owner: string;
   addedBy?: string;

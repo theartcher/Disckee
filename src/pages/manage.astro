@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import ManagePage from '../components/ManagePage';
+import { baseUrl } from '../lib/albums';
+---
+
+<Base title="Owners' panel">
+  <ManagePage client:only="react" baseUrl={baseUrl} />
+</Base>

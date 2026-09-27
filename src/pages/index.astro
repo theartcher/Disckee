@@ -1,12 +1,27 @@
 ---
 import Base from '../layouts/Base.astro';
-import AlbumListPage from '../components/AlbumListPage';
-import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
+import HomePage, { type Tile } from '../components/HomePage';
+import { albumsByStatus, baseUrl, toCard, type Album } from '../lib/albums';
 
-const albums = await Promise.all((await albumsByStatus('collection')).map(toCard));
-const count = `${albums.length} ${albums.length === 1 ? 'album' : 'albums'} on the shelf.`;
+const collection = await albumsByStatus('collection');
+const wishlist = await albumsByStatus('wishlist');
+const plural = (n: number, word: string) => `${n} ${n === 1 ? word : `${word}s`}`;
+// Up to four covers per tile, newest first.
+const covers = async (albums: Album[]) =>
+  (await Promise.all(albums.filter((album) => album.data.cover).slice(0, 4).map(toCard))).map((card) => card.cover!);
+const owned = (owner: Album['data']['owner']) => collection.filter((album) => album.data.owner === owner);
+
+const allTiles: Tile[] = [
+  { href: `${baseUrl}/collection/`, title: 'Collection', caption: plural(collection.length, 'CD'), covers: await covers(collection) },
+  { href: `${baseUrl}/collection/?owner=arthur`, title: "Arthur's CDs", caption: plural(owned('arthur').length, 'CD'), covers: await covers(owned('arthur')) },
+  { href: `${baseUrl}/collection/?owner=marlou`, title: "Marlou's CDs", caption: plural(owned('marlou').length, 'CD'), covers: await covers(owned('marlou')) },
+  { href: `${baseUrl}/collection/?owner=shared`, title: 'Shared CDs', caption: plural(owned('shared').length, 'CD'), covers: await covers(owned('shared')) },
+  { href: `${baseUrl}/wishlist/`, title: 'Wishlist', caption: plural(wishlist.length, 'CD'), covers: await covers(wishlist), icon: 'wishlist' },
+];
+// An owner's tile with no CDs yet would be an empty square.
+const tiles = allTiles.filter((tile) => tile.caption !== '0 CDs' || tile.icon);
 ---
 
 <Base>
-  <AlbumListPage client:only="react" baseUrl={baseUrl} section="collection" title="Our collection" subtitle={count} albums={albums} />
+  <HomePage client:only="react" baseUrl={baseUrl} tiles={tiles} />
 </Base>

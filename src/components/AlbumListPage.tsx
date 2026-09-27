@@ -5,6 +5,8 @@ import Fuse from 'fuse.js';
 import Shell from './Shell';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
+import Shelf from './Shelf';
+import RandomPick from './RandomPick';
 import type { AlbumCard, Section } from '../lib/albums';
 
 interface Props {
@@ -16,6 +18,19 @@ interface Props {
   /** Adds share buttons for the page and for each album. */
   share?: { href: string; title: string; text: string };
   empty?: string;
+  /** The home page: adds the "Latest additions" and favourites shelves and a random pick. */
+  home?: boolean;
+}
+
+const names = { arthur: 'Arthur', marlou: 'Marlou' } as const;
+const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+/** "added by Marlou, 3 days ago". Worked out in the browser, so it doesn't go stale between builds. */
+function addedCaption(album: AlbumCard) {
+  const days = Math.round((Date.parse(album.addedAt) - Date.now()) / 86_400_000);
+  const when =
+    days > -7 ? relative.format(Math.min(days, 0), 'day') : days > -60 ? relative.format(Math.round(days / 7), 'week') : relative.format(Math.round(days / 30), 'month');
+  return album.addedBy ? `${names[album.addedBy]}, ${when}` : when[0].toUpperCase() + when.slice(1);
 }
 
 const owners = [
@@ -25,10 +40,11 @@ const owners = [
   { value: 'marlou', label: 'Marlou' },
 ] as const;
 type Owner = (typeof owners)[number]['value'];
+const ownerTitles = { shared: 'Shared CDs', arthur: "Arthur's CDs", marlou: "Marlou's CDs" } as const;
 
 const byText = (a = '', b = '') => a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true });
 const sorts = {
-  added: { label: 'Recently added', compare: (a: AlbumCard, b: AlbumCard) => b.addedAt.localeCompare(a.addedAt) },
+  added: { label: 'Latest additions', compare: (a: AlbumCard, b: AlbumCard) => b.addedAt.localeCompare(a.addedAt) },
   title: { label: 'Title (A–Z)', compare: (a: AlbumCard, b: AlbumCard) => byText(a.title, b.title) },
   artist: {
     label: 'Artist (A–Z)',
@@ -79,7 +95,7 @@ function useBrowseState() {
   return { query, setQuery, owner, setOwner, sort, setSort, view, setView };
 }
 
-export default function AlbumListPage({ baseUrl, section, title, subtitle, albums, share, empty }: Props) {
+export default function AlbumListPage({ baseUrl, section, title, subtitle, albums, share, empty, home }: Props) {
   const { query, setQuery, owner, setOwner, sort, setSort, view, setView } = useBrowseState();
 
   const fuse = useMemo(
@@ -106,6 +122,8 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
   }, [albums, fuse, query, owner, sort]);
 
   const filtered = query.trim() !== '' || owner !== 'all';
+  const recent = useMemo(() => albums.toSorted(sorts.added.compare).slice(0, 10), [albums]);
+  const favorites = useMemo(() => albums.filter((album) => album.favorite), [albums]);
   const shareItem = (album: AlbumCard) =>
     share && (
       <ShareButton
@@ -120,16 +138,24 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
     <Shell baseUrl={baseUrl} section={section}>
       <Flex align="center" justify="space-between" gap={16} wrap>
         <Typography.Title level={2} style={{ margin: 0 }}>
-          {title}
+          {section === 'collection' && owner !== 'all' ? ownerTitles[owner] : title}
         </Typography.Title>
         {share && albums.length > 0 && <ShareButton {...share} label="Share" />}
       </Flex>
       <Typography.Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 16 }}>
-        {subtitle}
+        {section === 'collection' && owner !== 'all' ? null : subtitle}
       </Typography.Paragraph>
+
+      {home && !filtered && recent.length > 0 && <Shelf title="Latest additions" albums={recent} caption={addedCaption} />}
+      {home && !filtered && favorites.length > 0 && <Shelf title="Favourites" albums={favorites} />}
 
       {albums.length > 0 && (
         <Flex vertical gap={12} style={{ marginBottom: 24 }}>
+          {home && !filtered && (
+            <Typography.Title level={4} style={{ margin: 0 }}>
+              All albums
+            </Typography.Title>
+          )}
           <Input
             allowClear
             size="large"
@@ -148,6 +174,7 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
               options={Object.entries(sorts).map(([value, { label }]) => ({ value: value as Sort, label }))}
               style={{ minWidth: 190 }}
             />
+            {home && <RandomPick albums={shown} />}
             <Segmented<View>
               value={view}
               onChange={setView}
