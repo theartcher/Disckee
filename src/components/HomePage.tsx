@@ -1,5 +1,5 @@
-import { Card, Col, Row, Typography, theme } from 'antd';
-import { BarChartOutlined, CustomerServiceOutlined, HeartOutlined, SettingOutlined } from '@ant-design/icons';
+import { Card, Typography, theme } from 'antd';
+import { CustomerServiceOutlined, HeartOutlined, SettingOutlined } from '@ant-design/icons';
 import { ToolCards, ownerTools } from './ManagePage';
 import Shell from './Shell';
 import type { CoverImage } from '../lib/albums';
@@ -10,10 +10,10 @@ export interface Tile {
   caption: string;
   /** Up to four covers, shown as a 2×2 mosaic. */
   covers: CoverImage[];
-  icon?: 'wishlist' | 'stats';
+  icon?: 'wishlist';
 }
 
-const icons = { wishlist: <HeartOutlined />, stats: <BarChartOutlined /> };
+const icons = { wishlist: <HeartOutlined /> };
 
 function Mosaic({ tile }: { tile: Tile }) {
   const { token } = theme.useToken();
@@ -22,7 +22,7 @@ function Mosaic({ tile }: { tile: Tile }) {
     // Too few covers for a mosaic: one big one, or an icon.
     const [cover] = tile.covers;
     return cover ? (
-      <img src={cover.src} srcSet={cover.srcSet || undefined} sizes="(min-width: 768px) 30vw, 50vw" alt="" style={{ ...box, display: 'block', objectFit: 'cover' }} />
+      <img src={cover.src} srcSet={cover.srcSet || undefined} sizes="(min-width: 768px) 220px, 50vw" alt="" style={{ ...box, display: 'block', objectFit: 'cover' }} />
     ) : (
       <div aria-hidden="true" style={{ ...box, display: 'grid', placeItems: 'center', fontSize: 48, color: token.colorTextQuaternary }}>
         {tile.icon ? icons[tile.icon] : <CustomerServiceOutlined />}
@@ -36,7 +36,7 @@ function Mosaic({ tile }: { tile: Tile }) {
           key={cover.src}
           src={cover.src}
           srcSet={cover.srcSet || undefined}
-          sizes="(min-width: 768px) 15vw, 25vw"
+          sizes="(min-width: 768px) 110px, 25vw"
           alt=""
           loading="lazy"
           style={{ width: '100%', aspectRatio: '1', display: 'block', objectFit: 'cover' }}
@@ -56,17 +56,16 @@ export default function HomePage({ baseUrl, tiles }: { baseUrl: string; tiles: T
       <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
         Our CD collection, and the ones we'd love to have.
       </Typography.Paragraph>
-      <Row gutter={[16, 16]}>
+      {/* As many tiles per row as fit: all of them on a desktop, two on a phone. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
         {tiles.map((tile) => (
-          <Col key={tile.href} xs={12} md={8}>
-            <a href={tile.href} style={{ display: 'block', height: '100%' }}>
-              <Card hoverable style={{ height: '100%', overflow: 'hidden' }} styles={{ body: { padding: 12 } }} cover={<Mosaic tile={tile} />}>
-                <Card.Meta title={tile.title} description={tile.caption} />
-              </Card>
-            </a>
-          </Col>
+          <a key={tile.href} href={tile.href} style={{ display: 'block', height: '100%' }}>
+            <Card hoverable style={{ height: '100%', overflow: 'hidden' }} styles={{ body: { padding: 12 } }} cover={<Mosaic tile={tile} />}>
+              <Card.Meta title={tile.title} description={tile.caption} />
+            </Card>
+          </a>
         ))}
-      </Row>
+      </div>
 
       <Typography.Title level={4} style={{ marginTop: 32 }}>
         For Arthur & Marlou
