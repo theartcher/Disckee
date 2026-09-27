@@ -7,9 +7,9 @@ wishlist included, for gift ideas.
 - **Add a CD:** `/add` on your phone (the pencil menu → Add a CD). Scan the barcode, pick the release, then save in the prefilled form (signed in with GitHub). On the next deploy, the tracklist, label, genres and cover are filled in from MusicBrainz by `scripts/enrich.ts`.
 - **Edit:** `/admin` (Sveltia CMS). Fix details, add notes, mark "got it".
 
-Every save is a commit to `main` and rebuilds the site. After saving, `/admin`
-takes you back to the site, which reloads by itself once the change is live
-(a minute or two).
+Every save is a commit to `main`. Saves from `/admin` don't go live on their
+own: press **Publish Changes** in `/admin` once you're done, and the site
+rebuilds in about a minute.
 
 Stack: Astro (static) + React with Ant Design, on GitHub Pages · Sveltia CMS · MusicBrainz and Cover Art
 Archive, called straight from the browser. No servers.

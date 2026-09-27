@@ -38,10 +38,16 @@ const enabled = Boolean(authUrl) || import.meta.env.DEV;
     {
       enabled ? (
         <>
-          <a id="back" href={`${base}/`}>
-            ← Back to site
+          {/* Back to /add, for scanning the next CD after a save. */}
+          <a id="back" href={`${base}/add/`}>
+            ← Back to scan
           </a>
-          <script src="../../lib/admin-init.ts"></script>
+          <script>
+          import { init } from '@sveltia/cms';
+          import { cmsConfig } from '../../lib/cms';
+
+          init({ config: cmsConfig(new URL(import.meta.env.BASE_URL, location.origin).href) });
+          </script>
         </>
       ) : (
         <p style="font-family: system-ui, sans-serif; margin: 2rem">

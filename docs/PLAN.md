@@ -179,7 +179,7 @@ person scanning CDs never gets near.
 
 ### Enrichment (GitHub Action)
 
-Runs in the build job of every deploy (every save in `/admin` or other
+Runs in the build job of every deploy (Publish Changes in `/admin`, or a
 push to `main`), before the site is built:
 
 - For each album with a `musicbrainzId` but no tracklist or cover, fetch the

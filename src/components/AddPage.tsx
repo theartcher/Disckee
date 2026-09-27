@@ -162,7 +162,7 @@ function Adder({ baseUrl }: Props) {
           showIcon
           closable
           title="Saved it in the editor?"
-          description="It shows up on the site in a minute or two."
+          description="Press Publish Changes there and it shows up on the site in a minute or two."
         />
       )}
 
