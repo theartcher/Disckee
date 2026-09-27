@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Flex, Form, Image, Input, Radio, Result, Segmented, Spin, Typography, theme } from 'antd';
+import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Result, Segmented, Spin, Tag, Typography, theme } from 'antd';
 import { EditOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import Scanner from './Scanner';
-import { coverThumbnail, releaseUrl, searchBarcode, searchText, type Candidate } from '../lib/musicbrainz';
+import { coverThumbnail, lookUpRelease, releaseUrl, searchBarcode, searchText, type Candidate } from '../lib/musicbrainz';
+import {
+  frontCover500,
+  releaseGenres,
+  releaseLabel,
+  releaseTracklist,
+  releaseYear,
+  type Release,
+  type Track,
+} from '../lib/release';
 import {
   editAlbumUrl,
   findDuplicate,
@@ -21,6 +30,13 @@ type Lookup =
   | { state: 'loading'; barcode?: string }
   | { state: 'done'; barcode?: string; candidates: Candidate[] }
   | { state: 'failed'; barcode?: string };
+
+/** The picked release's full details, fetched once it's selected. */
+interface Details {
+  id: string;
+  release?: Release;
+  failed?: boolean;
+}
 
 const isBarcode = (text: string) => /^\d{8,14}$/.test(text);
 
@@ -54,12 +70,27 @@ export default function AddPage({ baseUrl }: Props) {
 }
 
 function Adder({ baseUrl }: Props) {
+  const { token } = theme.useToken();
   const [status, setStatus] = useState<Status>('collection');
   const [lookup, setLookup] = useState<Lookup>({ state: 'idle' });
   const [selected, setSelected] = useState<string>();
   const [known, setKnown] = useState<Known[]>([]);
   const [lastHandoff] = useState(() => recentHandoffs().at(-1));
+  const [details, setDetails] = useState<Details>();
   const abort = useRef<AbortController>(undefined);
+
+  useEffect(() => {
+    if (!selected) return;
+    const controller = new AbortController();
+    lookUpRelease(selected, controller.signal).then(
+      (release) => setDetails({ id: selected, release }),
+      () => {
+        // Without the details, the basics from the search result are still prefilled.
+        if (!controller.signal.aborted) setDetails({ id: selected, failed: true });
+      },
+    );
+    return () => controller.abort();
+  }, [selected]);
 
   useEffect(() => {
     void publishedAlbums(baseUrl).then((albums) => setKnown([...albums, ...recentHandoffs()]));
@@ -91,12 +122,21 @@ function Adder({ baseUrl }: Props) {
   const barcode = lookup.state === 'idle' ? undefined : lookup.barcode;
   const candidates = lookup.state === 'done' ? lookup.candidates : [];
   const choice = candidates.find((candidate) => candidate.id === selected);
+  const current = details?.id === selected ? details : undefined;
+  const release = current?.release;
+  const hasCover = !!release?.['cover-art-archive']?.front;
   const draft: Draft | undefined = choice && {
     title: choice.title,
     artist: choice.artist,
     status,
     musicbrainz: choice.id,
     barcode: pickBarcode(barcode, choice.barcode),
+    ...(release && {
+      year: releaseYear(release),
+      genres: releaseGenres(release),
+      label: releaseLabel(release),
+      ...(hasCover && { cover: frontCover500(choice.id), coverCredit: 'cover-art-archive' as const }),
+    }),
   };
   const duplicate = findDuplicate(known, { musicbrainz: choice?.id, barcode });
 
@@ -186,6 +226,8 @@ function Adder({ baseUrl }: Props) {
         </>
       )}
 
+      {choice && release && <ReleaseDetails id={choice.id} release={release} hasCover={hasCover} />}
+
       {duplicate && (
         <Alert
           type="warning"
@@ -209,19 +251,113 @@ function Adder({ baseUrl }: Props) {
       )}
 
       {draft && (
-        <div style={{ position: 'sticky', bottom: 16 }}>
+        // Stays in reach at the bottom of the screen, clear of the iPhone home bar.
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            marginTop: 8,
+            paddingTop: 12,
+            paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+            background: token.colorBgLayout,
+          }}
+        >
           <Button
             type={duplicate ? 'default' : 'primary'}
             size="large"
             block
             href={newAlbumUrl(baseUrl, draft)}
             onClick={() => rememberHandoff(draft)}
+            loading={!current}
           >
             {duplicate ? 'Add another copy' : status === 'wishlist' ? 'Add to the wishlist' : 'Add to the collection'}
           </Button>
         </div>
       )}
     </>
+  );
+}
+
+const placeholder = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#8884"/></svg>')}`;
+
+/** What will be filled in, so it can be checked before opening the editor. */
+function ReleaseDetails({ id, release, hasCover }: { id: string; release: Release; hasCover: boolean }) {
+  const { token } = theme.useToken();
+  const year = releaseYear(release);
+  const genres = releaseGenres(release);
+  const label = releaseLabel(release);
+  const tracks = releaseTracklist(release);
+
+  return (
+    <Card size="small" title="This gets filled in">
+      <Flex gap={16} wrap>
+        {hasCover && (
+          <Image
+            src={frontCover500(id)}
+            alt="Front cover"
+            width={120}
+            height={120}
+            style={{ objectFit: 'cover', borderRadius: token.borderRadiusSM }}
+            fallback={placeholder}
+          />
+        )}
+        <Descriptions
+          size="small"
+          column={1}
+          style={{ flex: 1, minWidth: 180 }}
+          items={[
+            { key: 'year', label: 'Year', children: year ?? '–' },
+            {
+              key: 'genres',
+              label: 'Genres',
+              children: genres.length ? (
+                <Flex wrap gap={4}>
+                  {genres.map((genre) => (
+                    <Tag key={genre} style={{ marginInlineEnd: 0 }}>
+                      {genre}
+                    </Tag>
+                  ))}
+                </Flex>
+              ) : (
+                '–'
+              ),
+            },
+            { key: 'label', label: 'Label', children: label ?? '–' },
+            { key: 'cover', label: 'Cover', children: hasCover ? 'From Cover Art Archive' : 'None found, add a photo' },
+          ]}
+        />
+      </Flex>
+      {tracks.length > 0 && (
+        <Collapse
+          ghost
+          size="small"
+          style={{ marginTop: 8 }}
+          items={[
+            {
+              key: 'tracks',
+              label: `Tracklist, ${tracks.length} tracks (added when you publish)`,
+              children: <Tracklist tracks={tracks} />,
+            },
+          ]}
+        />
+      )}
+    </Card>
+  );
+}
+
+function Tracklist({ tracks }: { tracks: Track[] }) {
+  return (
+    <Flex vertical gap={2}>
+      {tracks.map((track) => (
+        <Flex key={track.position} gap={8}>
+          <Typography.Text type="secondary" style={{ minWidth: 32 }}>
+            {track.position}
+          </Typography.Text>
+          <Typography.Text style={{ flex: 1 }}>{track.title}</Typography.Text>
+          {track.duration && <Typography.Text type="secondary">{track.duration}</Typography.Text>}
+        </Flex>
+      ))}
+    </Flex>
   );
 }
 
@@ -246,7 +382,7 @@ function CandidateCard({ candidate, selected }: { candidate: Candidate; selected
             height={64}
             preview={false}
             style={{ objectFit: 'cover', borderRadius: token.borderRadiusSM }}
-            fallback={`data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#8884"/></svg>')}`}
+            fallback={placeholder}
           />
           <Flex vertical style={{ minWidth: 0 }}>
             <Typography.Text strong>{candidate.title}</Typography.Text>

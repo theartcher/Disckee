@@ -10,6 +10,7 @@ export const people = ['arthur', 'marlou'] as const;
  */
 export const githubLogins: Record<string, (typeof people)[number]> = {
   theartcher: 'arthur',
+  marlou2111: 'marlou',
 };
 
 /**
@@ -43,10 +44,8 @@ export const albumSchema = <Image extends z.ZodType>(image: () => Image) =>
     acquiredAt: z.coerce.date().optional(),
     note: z.string().max(280).optional(),
     favorite: z.boolean().default(false),
-    ids: z
-      .object({
-        musicbrainz: z.uuid().optional(),
-        barcode: z.string().regex(/^\d{8,14}$/).optional(),
-      })
-      .default({}),
+    // Top-level rather than grouped: Sveltia only prefills top-level fields
+    // from /add's URL parameters.
+    musicbrainzId: z.uuid().optional(),
+    barcode: z.string().regex(/^\d{8,14}$/).optional(),
   });

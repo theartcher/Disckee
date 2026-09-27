@@ -91,13 +91,14 @@ Covers live in `src/assets/covers/<slug>.jpg` (not `public/`), so Astro's
 | `acquiredAt` | date, optional | Set when a wishlist item becomes collection ("got it") |
 | `note` | string, optional | Short personal text, max ~280 chars |
 | `favorite` | boolean | Optional, drives a "favourites" shelf later |
-| `ids` | `{ musicbrainz?, barcode? }` | Traceability + duplicate detection |
+| `musicbrainzId` | string, optional | MusicBrainz release id; drives enrichment and duplicate detection |
+| `barcode` | string, optional | As printed; duplicate detection |
 
 The schema is defined once with Zod in `src/lib/album-schema.ts`, and the
 Sveltia config (`src/lib/cms.ts`) mirrors it. The build fails if the two
 drift apart.
 
-The build also emits `/albums.json` (slug, ids and status for every album).
+The build also emits `/albums.json` (slug, MusicBrainz id, barcode and status for every album).
 `/add` uses it to spot duplicates.
 
 ## 4. Public site
@@ -157,11 +158,13 @@ and hands off to Sveltia, which does the signed-in save.
    has several pressings; if there's only one match, it's preselected. If the
    barcode is already in `albums.json`, the page says "You already have
    this".
-4. **Add → Save.** A "We have it / We want it" switch sets the status. The
-   Add button opens Sveltia's new-album form with title, artist, status and
-   the MusicBrainz id/barcode already filled in (Sveltia supports
-   prefilling via URL parameters). Tap Save. The original year comes from
-   enrichment.
+4. **Add → Save.** A "We have it / We want it" switch sets the status. Only
+   CD releases are listed. Picking one fetches its details, and the Add
+   button opens Sveltia's new-album form with title, artist, status, year
+   (original release), genres, label, the Cover Art Archive cover URL, and
+   the MusicBrainz id and barcode already filled in (Sveltia prefills
+   top-level fields from URL parameters). Tap Save. The tracklist can't be
+   passed that way, so /add shows it and enrichment adds it.
 
 After the save, a GitHub Action fills in the rest (section 5, "Enrichment").
 The site is live in a minute or two. `/add` keeps a local list of
@@ -179,8 +182,10 @@ person scanning CDs never gets near.
 Runs in the build job of every deploy (Publish Changes in `/admin`, or a
 push to `main`), before the site is built:
 
-- For each album with `ids.musicbrainz` but no tracklist or cover, fetch the
+- For each album with a `musicbrainzId` but no tracklist or cover, fetch the
   release from MusicBrainz and the 500px front cover from Cover Art Archive.
+  A cover prefilled as a URL is downloaded into the repo (or dropped if it
+  can't be, so the build never breaks on it).
 - Fill in tracklist, label and genres, save the cover to
   `src/assets/covers/`, and set `addedBy` from the commit author's GitHub
   login (`arthur` / `marlou` mapping in config).

@@ -77,7 +77,7 @@ export async function toDetail(album: Album): Promise<AlbumDetail> {
     addedAt: formatDate(d.addedAt),
     acquiredAt: d.acquiredAt && formatDate(d.acquiredAt),
     note: d.note,
-    musicbrainzUrl: d.ids.musicbrainz && `https://musicbrainz.org/release/${d.ids.musicbrainz}`,
+    musicbrainzUrl: d.musicbrainzId && `https://musicbrainz.org/release/${d.musicbrainzId}`,
     discs: groupByDisc(d.tracklist),
   };
 }
