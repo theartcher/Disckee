@@ -1,6 +1,8 @@
-import { Button, Col, Descriptions, Divider, List, Row, Space, Tag, Typography } from 'antd';
+import { Breadcrumb, Button, Col, Descriptions, List, Row, Space, Tag, Typography } from 'antd';
+import { useState } from 'react';
 import { ExportOutlined, HeartOutlined } from '@ant-design/icons';
 import Shell from './Shell';
+import { SectionTitle } from './PageHeader';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
 import type { AlbumDetail } from '../lib/albums';
@@ -10,11 +12,21 @@ interface Props {
   album: AlbumDetail;
 }
 
+/** The list this album belongs to, with the search and filters it was opened from when it was opened from there. */
+function listHref(baseUrl: string, status: AlbumDetail['status']) {
+  const list = `${baseUrl}/${status}/`;
+  try {
+    const from = new URL(document.referrer);
+    if (from.origin === location.origin && from.pathname === list) return `${from.pathname}${from.search}`;
+  } catch {}
+  return list;
+}
+
 export default function AlbumPage({ baseUrl, album }: Props) {
   const onWishlist = album.status === 'wishlist';
+  const [back] = useState(() => listHref(baseUrl, album.status));
   const facts = [
     album.year && { key: 'year', label: 'Year', children: album.year },
-    album.label && { key: 'label', label: 'Label', children: album.label },
     { key: 'owner', label: onWishlist ? 'Wished for by' : 'Belongs to', children: album.owner },
     !onWishlist && album.acquiredAt && { key: 'acquired', label: 'Got it on', children: album.acquiredAt },
     {
@@ -26,6 +38,10 @@ export default function AlbumPage({ baseUrl, album }: Props) {
 
   return (
     <Shell baseUrl={baseUrl} section={album.status}>
+      <Breadcrumb
+        items={[{ title: onWishlist ? 'Wishlist' : 'Collection', href: back }, { title: album.title }]}
+        style={{ marginBottom: 12 }}
+      />
       <Row gutter={[32, 24]}>
         <Col xs={24} md={10} lg={8}>
           <CoverImage
@@ -43,7 +59,7 @@ export default function AlbumPage({ baseUrl, album }: Props) {
               On our wishlist
             </Tag>
           )}
-          <Typography.Title level={1} style={{ margin: 0 }}>
+          <Typography.Title level={2} style={{ margin: 0 }}>
             {album.title}
           </Typography.Title>
           <Typography.Title level={4} type="secondary" style={{ marginTop: 4 }}>
@@ -53,7 +69,9 @@ export default function AlbumPage({ baseUrl, album }: Props) {
           {album.genres.length > 0 && (
             <Space size={[8, 8]} wrap style={{ marginBottom: 16 }}>
               {album.genres.map((genre) => (
-                <Tag key={genre}>{genre}</Tag>
+                <Tag key={genre} variant="outlined" style={{ margin: 0 }}>
+                  {genre}
+                </Tag>
               ))}
             </Space>
           )}
@@ -66,44 +84,49 @@ export default function AlbumPage({ baseUrl, album }: Props) {
             </Typography.Paragraph>
           )}
 
-          <Space wrap style={{ marginTop: 16 }}>
-            {onWishlist && (
+          {/* Wishlist CDs only: Share for the family chat, and the release details for whoever buys it. */}
+          {onWishlist && (
+            <Space wrap style={{ marginTop: 16 }}>
               <ShareButton
                 href={album.href}
                 title={`${album.title} by ${album.artist}`}
                 text={`On Arthur & Marlou's wishlist: ${album.title} by ${album.artist}`}
                 label="Share"
               />
-            )}
-            {album.musicbrainzUrl && (
-              <Button href={album.musicbrainzUrl} icon={<ExportOutlined />} target="_blank" rel="noopener">
-                View on MusicBrainz
-              </Button>
-            )}
-          </Space>
+              {album.musicbrainzUrl && (
+                <Button href={album.musicbrainzUrl} icon={<ExportOutlined />} target="_blank" rel="noopener">
+                  View on MusicBrainz
+                </Button>
+              )}
+            </Space>
+          )}
 
           {album.discs.length > 0 && (
-            <>
-              <Divider titlePlacement="start">Tracklist</Divider>
+            <section style={{ marginTop: 32 }}>
+              <SectionTitle>Tracklist</SectionTitle>
               {album.discs.map(({ disc, tracks }) => (
-                <List
-                  key={disc}
-                  size="small"
-                  header={album.discs.length > 1 ? <Typography.Text strong>Disc {disc}</Typography.Text> : undefined}
-                  dataSource={tracks}
-                  renderItem={(track) => (
-                    <List.Item extra={track.duration && <Typography.Text type="secondary">{track.duration}</Typography.Text>}>
-                      <Space>
-                        <Typography.Text type="secondary" style={{ display: 'inline-block', minWidth: 20, textAlign: 'right' }}>
-                          {track.position}
-                        </Typography.Text>
-                        {track.title}
-                      </Space>
-                    </List.Item>
-                  )}
-                />
+                <div key={disc} style={{ marginBottom: 16 }}>
+                  {album.discs.length > 1 && <Typography.Text strong>Disc {disc}</Typography.Text>}
+                  <List
+                    size="small"
+                    dataSource={tracks}
+                    renderItem={(track) => (
+                      <List.Item
+                        style={{ paddingInline: 0 }}
+                        extra={track.duration && <Typography.Text type="secondary">{track.duration}</Typography.Text>}
+                      >
+                        <Space>
+                          <Typography.Text type="secondary" style={{ display: 'inline-block', minWidth: 20, textAlign: 'right' }}>
+                            {track.position}
+                          </Typography.Text>
+                          {track.title}
+                        </Space>
+                      </List.Item>
+                    )}
+                  />
+                </div>
               ))}
-            </>
+            </section>
           )}
         </Col>
       </Row>
