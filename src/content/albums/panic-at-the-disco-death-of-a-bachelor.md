@@ -2,7 +2,7 @@
 title: Death of a Bachelor
 artist: Panic! at the Disco
 status: collection
-acquiredAt: 2026-09-27
+acquiredAt: 2020-12-24
 year: 2016
 label: Fueled by Ramen
 genres:
@@ -13,6 +13,7 @@ genres:
 owner: marlou
 favorite: false
 cover: ../../assets/covers/panic-at-the-disco-death-of-a-bachelor.jpg
+coverCredit: cover-art-archive
 tracklist:
   - position: '1'
     title: Victorious
@@ -51,5 +52,4 @@ musicbrainzId: f45cf289-cc98-4aba-8bb0-f4b32dfa55fa
 barcode: '075678666735'
 addedBy: marlou
 addedAt: 2026-09-27
-coverCredit: cover-art-archive
 ---
