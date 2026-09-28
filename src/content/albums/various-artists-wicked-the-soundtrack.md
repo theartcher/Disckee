@@ -2,7 +2,7 @@
 title: 'Wicked: The Soundtrack'
 artist: Various Artists
 status: collection
-acquiredAt: 2025-11-29
+acquiredAt: 2025-12-26
 year: 2024
 label: Republic Records
 genres:
