@@ -2,7 +2,7 @@
 title: EVERYONE'S A STAR!
 artist: 5 Seconds Of Summer
 status: collection
-acquiredAt: 2026-09-27
+acquiredAt: 2025-11-14
 year: 2025
 label: Republic Records
 genres:
