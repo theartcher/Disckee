@@ -42,10 +42,18 @@ export const albumSchema = <Image extends z.ZodType>(image: () => Image) =>
     addedBy: z.enum(people).optional(),
     addedAt: z.coerce.date(),
     acquiredAt: z.coerce.date().optional(),
+    // "Received but unknown": we have it but don't know since when. Never
+    // together with acquiredAt; the site shows it as the oldest addition.
+    acquiredUnknown: z.boolean().default(false),
     note: z.string().max(280).optional(),
     favorite: z.boolean().default(false),
     // Top-level rather than grouped: Sveltia only prefills top-level fields
     // from /add's URL parameters.
     musicbrainzId: z.uuid().optional(),
     barcode: z.string().regex(/^\d{8,14}$/).optional(),
+  })
+  // Sveltia can't make one field depend on another, so the build enforces it.
+  .refine((album) => !(album.acquiredUnknown && album.acquiredAt), {
+    message: 'Set either "Got it on" or "Received but unknown", not both',
+    path: ['acquiredUnknown'],
   });
