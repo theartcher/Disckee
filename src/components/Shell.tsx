@@ -14,7 +14,8 @@ function initialMode(): Mode {
 }
 
 // The hidden Easter-egg theme: Helldivers 2's Super Earth look. Opt-in only, via the Eagle 500kg Bomb
-// stratagem (up, right, down, down, down) on the arrow keys, WASD or as swipes, and remembered on this device.
+// stratagem (up, right, down, down, down) on the arrow keys or WASD anywhere, or as swipes on the Admin page,
+// and remembered on this device.
 const helldiversKey = 'disckee:helldivers';
 type Direction = 'up' | 'down' | 'left' | 'right';
 const stratagem: Direction[] = ['up', 'right', 'down', 'down', 'down'];
@@ -23,7 +24,7 @@ const keys: Record<string, Direction> = {
   w: 'up', s: 'down', a: 'left', d: 'right',
 };
 // How far a finger has to move before it counts as a swipe.
-const swipeMin = 40;
+const swipeMin = 30;
 
 const helldiversTheme: ThemeConfig = {
   algorithm: theme.darkAlgorithm,
@@ -105,9 +106,12 @@ export default function Shell({ baseUrl, section, children }: Props) {
   );
 
   // The stratagem switches the Easter egg on or off. Not while typing, so searching for "wasd" is safe.
+  // Swipes only count on the Admin page: it doesn't scroll, so a swipe there is never also a scroll.
+  const swipes = section === 'manage';
   useEffect(() => {
     let at = 0;
-    let start: { x: number; y: number } | undefined;
+    let start: { x: number; y: number; scroll: number } | undefined;
+    let last: { x: number; y: number } | undefined;
     const typing = (target: EventTarget | null) =>
       !!(target as HTMLElement | null)?.closest('input, textarea, [contenteditable="true"]');
     const enter = (direction: Direction) => {
@@ -122,15 +126,30 @@ export default function Shell({ baseUrl, section, children }: Props) {
       const direction = keys[event.key.length === 1 ? event.key.toLowerCase() : event.key];
       if (direction) enter(direction);
     };
+    // Swipes are read from screen coordinates plus how far the page scrolled, because browsers differ in
+    // what they report once a swipe turns into scrolling: Firefox on Android may cancel the touch, or move
+    // its toolbar and so the viewport under the finger.
     const onTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
-      start = event.touches.length === 1 && !typing(event.target) ? { x: touch.clientX, y: touch.clientY } : undefined;
+      start =
+        event.touches.length === 1 && !typing(event.target)
+          ? { x: touch.screenX, y: touch.screenY, scroll: window.scrollY }
+          : undefined;
+      last = start && { x: start.x, y: start.y };
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (start && touch) last = { x: touch.screenX, y: touch.screenY };
     };
     const onTouchEnd = (event: TouchEvent) => {
-      if (!start) return;
+      if (!start || !last) return;
       const touch = event.changedTouches[0];
-      const dx = touch.clientX - start.x;
-      const dy = touch.clientY - start.y;
+      const end = event.type === 'touchend' && touch ? { x: touch.screenX, y: touch.screenY } : last;
+      const dx = end.x - start.x;
+      let dy = end.y - start.y;
+      // The page scrolls the opposite way to the finger. Use that when the touch itself went missing.
+      const scrolled = window.scrollY - start.scroll;
+      if (Math.abs(scrolled) > Math.abs(dy)) dy = -scrolled;
       start = undefined;
       // A tap isn't a swipe; it doesn't break the sequence either.
       if (Math.max(Math.abs(dx), Math.abs(dy)) < swipeMin) return;
@@ -138,14 +157,23 @@ export default function Shell({ baseUrl, section, children }: Props) {
       enter(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up');
     };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    if (swipes) {
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+      window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+      // Swiping down at the top of a page would otherwise pull to refresh.
+      document.documentElement.style.overscrollBehaviorY = 'none';
+    }
     return () => {
+      document.documentElement.style.overscrollBehaviorY = '';
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [skin, setHelldivers]);
+  }, [skin, setHelldivers, swipes]);
 
   const toggle = () => {
     // In Helldivers mode the button is the way out, back to whatever light/dark was before.
