@@ -1,4 +1,4 @@
-import { Button, Result, theme } from 'antd';
+import { Button, Flex, Result, theme } from 'antd';
 import { CustomerServiceOutlined, HomeOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import { useRandomPick } from './RandomPick';
@@ -44,14 +44,16 @@ export default function NotFoundPage({ baseUrl, albums }: { baseUrl: string; alb
         icon={<SkippingDisc />}
         title="This track skips"
         subTitle="There's nothing at this address. Maybe the link has a scratch in it."
-        extra={[
-          <Button key="home" href={`${baseUrl}/`} icon={<HomeOutlined />}>
-            Home
-          </Button>,
-          <Button key="pick" type="primary" icon={<CustomerServiceOutlined />} onClick={pick.draw} disabled={!albums.length}>
-            Pick a CD instead
-          </Button>,
-        ]}
+        extra={
+          <Flex vertical gap={8} style={{ width: 240, margin: '0 auto' }}>
+            <Button block type="primary" icon={<CustomerServiceOutlined />} onClick={pick.draw} disabled={!albums.length}>
+              Pick a CD instead
+            </Button>
+            <Button block href={`${baseUrl}/`} icon={<HomeOutlined />}>
+              Home
+            </Button>
+          </Flex>
+        }
       />
       {pick.picker}
     </Shell>
