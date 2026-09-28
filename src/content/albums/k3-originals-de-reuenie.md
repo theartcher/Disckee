@@ -2,7 +2,7 @@
 title: De Reünie
 artist: K3 Originals
 status: collection
-acquiredAt: 2026-09-27
+acquiredAt: 2026-05-30
 year: 2026
 label: Studio 100
 genres:

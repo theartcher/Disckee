@@ -29,6 +29,7 @@ const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
 /** "added by Marlou, 3 days ago". Worked out in the browser, so it doesn't go stale between builds. */
 function addedCaption(album: AlbumCard) {
+  if (album.addedUnknown) return album.addedBy ? `${names[album.addedBy]}, an unknown long time ago...` : 'An unknown long time ago...';
   const days = Math.round((Date.parse(album.addedAt) - Date.now()) / 86_400_000);
   const when =
     days > -7 ? relative.format(Math.min(days, 0), 'day') : days > -60 ? relative.format(Math.round(days / 7), 'week') : relative.format(Math.round(days / 30), 'month');

@@ -35,6 +35,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
             : matchMedia('(prefers-color-scheme: dark)').matches
               ? 'dark'
               : 'light';
+        // The hidden Helldivers theme (see Shell) is dark-based.
+        if (localStorage.getItem('disckee:helldivers') === 'on') {
+          document.documentElement.dataset.theme = 'dark';
+          document.documentElement.dataset.skin = 'helldivers';
+        }
       } catch {}
     </script>
     <style is:global>
@@ -60,6 +65,19 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       html[data-theme='dark'] #boot-header {
         background: #141414;
         border-bottom-color: #303030;
+      }
+      html[data-skin='helldivers'],
+      html[data-skin='helldivers'] body {
+        background: #0b0c0e;
+      }
+      /* Helldivers headings shout, like the game's menus. */
+      html[data-skin='helldivers'] :is(h1, h2, h3, h4) {
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      html[data-skin='helldivers'] #boot-header {
+        background: #1b1c1e;
+        border-bottom-color: #2c2d30;
       }
       body:has(.ant-layout) #boot-header {
         display: none;

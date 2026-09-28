@@ -10,11 +10,24 @@ export const personName = (key: keyof typeof names) => names[key];
 
 export const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 
+/** Owned CDs we don't know the arrival date of ("Received but unknown"). A filled-in date wins. */
+export const arrivalUnknown = (album: Album) =>
+  album.data.status === 'collection' && album.data.acquiredUnknown && !album.data.acquiredAt;
+
+/**
+ * When an album joined its list. Wishlist CDs that arrived count as added the
+ * day they arrived; ones with an unknown date count as the oldest of all.
+ */
+export const addedOn = (album: Album) =>
+  arrivalUnknown(album) ? new Date(0) : (album.data.acquiredAt ?? album.data.addedAt);
+
 /** Albums with the given status, newest first. */
 export async function albumsByStatus(status: Section) {
   const albums = await getCollection('albums', ({ data }) => data.status === status);
-  return albums.toSorted((a, b) => b.data.addedAt.valueOf() - a.data.addedAt.valueOf());
+  return albums.toSorted((a, b) => addedOn(b).valueOf() - addedOn(a).valueOf());
 }
+
+export const unknownArrival = 'An unknown long time ago...';
 
 export const formatDate = (date: Date) =>
   date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -35,6 +48,8 @@ export interface AlbumCard {
   /** For the in-browser search, sorting and owner views. */
   owner: Album['data']['owner'];
   addedAt: string;
+  /** Got it, but nobody knows when: `addedAt` is then the oldest possible date. */
+  addedUnknown?: boolean;
   addedBy?: Album['data']['addedBy'];
   favorite: boolean;
   label?: string;
@@ -62,8 +77,8 @@ export async function toCard(album: Album): Promise<AlbumCard> {
     year: album.data.year,
     cover: await coverImage(album, [240, 360, 480]),
     owner: album.data.owner,
-    // Wishlist CDs that arrived count as added the day they arrived.
-    addedAt: (album.data.acquiredAt ?? album.data.addedAt).toISOString(),
+    addedAt: addedOn(album).toISOString(),
+    addedUnknown: arrivalUnknown(album) || undefined,
     addedBy: album.data.addedBy,
     favorite: album.data.favorite,
     label: album.data.label,
@@ -72,7 +87,7 @@ export async function toCard(album: Album): Promise<AlbumCard> {
   };
 }
 
-export interface AlbumDetail extends Omit<AlbumCard, 'owner' | 'addedAt' | 'addedBy'> {
+export interface AlbumDetail extends Omit<AlbumCard, 'owner' | 'addedAt' | 'addedUnknown' | 'addedBy'> {
   status: Section;
   owner: string;
   addedBy?: string;
@@ -94,7 +109,7 @@ export async function toDetail(album: Album): Promise<AlbumDetail> {
     owner: personName(d.owner),
     addedBy: d.addedBy && personName(d.addedBy),
     addedAt: formatDate(d.addedAt),
-    acquiredAt: d.acquiredAt && formatDate(d.acquiredAt),
+    acquiredAt: arrivalUnknown(album) ? unknownArrival : d.acquiredAt && formatDate(d.acquiredAt),
     note: d.note,
     musicbrainzUrl: d.musicbrainzId && `https://musicbrainz.org/release/${d.musicbrainzId}`,
     discs: groupByDisc(d.tracklist),

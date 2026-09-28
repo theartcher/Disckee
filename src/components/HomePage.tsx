@@ -3,6 +3,7 @@ import { CustomerServiceOutlined, HeartOutlined } from '@ant-design/icons';
 import { ToolCards, ownerTools } from './ManagePage';
 import Shell from './Shell';
 import { useRandomPick } from './RandomPick';
+import OnThisDay from './OnThisDay';
 import type { AlbumCard, CoverImage } from '../lib/albums';
 
 export interface Tile {
@@ -58,6 +59,7 @@ export default function HomePage({ baseUrl, tiles, albums }: { baseUrl: string; 
       <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
         Our CD collection, and the ones we'd love to have.
       </Typography.Paragraph>
+      <OnThisDay albums={albums} />
       {/* As many tiles per row as fit: all of them on a desktop, two on a phone. */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16 }}>
         {tiles.map((tile) => (

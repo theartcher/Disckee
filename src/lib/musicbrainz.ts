@@ -36,12 +36,18 @@ interface SearchRelease {
 // MusicBrainz asks every client for at most one request per second.
 let lastRequest = 0;
 
+class HttpError extends Error {
+  constructor(readonly status: number) {
+    super(`MusicBrainz answered ${status}`);
+  }
+}
+
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   const wait = lastRequest + 1100 - Date.now();
   if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
   lastRequest = Date.now();
   const response = await fetch(`${api}${path}`, { headers: { Accept: 'application/json' }, signal });
-  if (!response.ok) throw new Error(`MusicBrainz answered ${response.status}`);
+  if (!response.ok) throw new HttpError(response.status);
   return (await response.json()) as T;
 }
 
@@ -118,6 +124,25 @@ export async function searchText(artist: string, title: string, signal?: AbortSi
   if (found.length) return found;
 
   return search(all.map((word) => `(release:${fuzzy(word)} OR artist:${fuzzy(word)})`).join(' AND '), signal);
+}
+
+/** The release id in a pasted MusicBrainz release link (or a bare id). Not a release group's. */
+export function releaseIdFrom(text: string) {
+  if (/release-group/i.test(text)) return undefined;
+  return text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0].toLowerCase();
+}
+
+/**
+ * One release by id, for when it's on MusicBrainz but the searches miss it.
+ * Any format: whoever pasted the link picked it on purpose. Empty if there's no such release.
+ */
+export async function findRelease(id: string, signal?: AbortSignal) {
+  try {
+    return [toCandidate(await get<SearchRelease>(`/release/${id}?inc=artist-credits+labels+media&fmt=json`, signal))];
+  } catch (error) {
+    if (error instanceof HttpError && error.status === 404) return [];
+    throw error;
+  }
 }
 
 /** Everything about one release that /add prefills: year, genres, label, tracklist, cover. */

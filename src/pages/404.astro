@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import NotFoundPage from '../components/NotFoundPage';
+import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
+
+const collection = await albumsByStatus('collection');
+---
+
+<Base title="Not found">
+  <NotFoundPage client:only="react" baseUrl={baseUrl} albums={await Promise.all(collection.map(toCard))} />
+</Base>
