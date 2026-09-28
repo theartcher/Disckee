@@ -35,6 +35,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
             : matchMedia('(prefers-color-scheme: dark)').matches
               ? 'dark'
               : 'light';
+        // The hidden Winamp theme (see Shell) is dark-based.
+        if (localStorage.getItem('disckee:winamp') === 'on') {
+          document.documentElement.dataset.theme = 'dark';
+          document.documentElement.dataset.skin = 'winamp';
+        }
       } catch {}
     </script>
     <style is:global>
@@ -60,6 +65,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       html[data-theme='dark'] #boot-header {
         background: #141414;
         border-bottom-color: #303030;
+      }
+      html[data-skin='winamp'],
+      html[data-skin='winamp'] body {
+        background: #101018;
+      }
+      html[data-skin='winamp'] #boot-header {
+        background: #1c1c28;
+        border-bottom-color: #2e2e3c;
       }
       body:has(.ant-layout) #boot-header {
         display: none;
