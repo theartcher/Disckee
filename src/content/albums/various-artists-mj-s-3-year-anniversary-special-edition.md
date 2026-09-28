@@ -2,7 +2,7 @@
 title: MJ's 3-year anniversary - special edition
 artist: Various Artists
 status: collection
-acquiredAt: 2026-09-27
+acquiredAt: 2026-04-21
 year: 2026
 label: Joris Brugman
 owner: marlou
