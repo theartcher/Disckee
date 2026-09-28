@@ -2,7 +2,7 @@
 title: Don't Stop
 artist: 5 Seconds Of Summer
 status: collection
-acquiredAt: 2026-09-27
+acquiredAt: 2017-07-31
 year: 2014
 genres:
   - pop punk
