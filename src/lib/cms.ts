@@ -31,7 +31,7 @@ export const albumFields: Field[] = [
     type: 'date',
     format: 'YYYY-MM-DD',
     required: false,
-    hint: 'Filled in on the next publish when you move a wishlist CD to the collection. Set it yourself to use another date. Leave it empty if you tick "Received but unknown".',
+    hint: 'Filled in on the next publish when you move a wishlist CD to the collection. Set it yourself to use another date. A date here wins over "Received but unknown".',
   },
   {
     name: 'acquiredUnknown',
@@ -39,7 +39,7 @@ export const albumFields: Field[] = [
     widget: 'boolean',
     default: false,
     required: false,
-    hint: 'We have it but don\'t know since when. Only tick this when "Got it on" is empty: publishing fails if both are set.',
+    hint: 'We have it but don\'t know since when. Ignored when "Got it on" has a date.',
   },
   { name: 'year', label: 'Year', widget: 'number', value_type: 'int', min: 1900, max: 2100, required: false },
   { name: 'label', label: 'Record label', widget: 'string', required: false },

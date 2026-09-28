@@ -10,8 +10,9 @@ export const personName = (key: keyof typeof names) => names[key];
 
 export const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-/** Owned CDs we don't know the arrival date of ("Received but unknown"). */
-export const arrivalUnknown = (album: Album) => album.data.status === 'collection' && album.data.acquiredUnknown;
+/** Owned CDs we don't know the arrival date of ("Received but unknown"). A filled-in date wins. */
+export const arrivalUnknown = (album: Album) =>
+  album.data.status === 'collection' && album.data.acquiredUnknown && !album.data.acquiredAt;
 
 /**
  * When an album joined its list. Wishlist CDs that arrived count as added the
