@@ -14,7 +14,8 @@ function initialMode(): Mode {
 }
 
 // The hidden Easter-egg theme: Helldivers 2's Super Earth look. Opt-in only, via the Eagle 500kg Bomb
-// stratagem (up, right, down, down, down) on the arrow keys, WASD or as swipes, and remembered on this device.
+// stratagem (up, right, down, down, down) on the arrow keys or WASD anywhere, or as swipes on the Admin page,
+// and remembered on this device.
 const helldiversKey = 'disckee:helldivers';
 type Direction = 'up' | 'down' | 'left' | 'right';
 const stratagem: Direction[] = ['up', 'right', 'down', 'down', 'down'];
@@ -105,6 +106,8 @@ export default function Shell({ baseUrl, section, children }: Props) {
   );
 
   // The stratagem switches the Easter egg on or off. Not while typing, so searching for "wasd" is safe.
+  // Swipes only count on the Admin page: it doesn't scroll, so a swipe there is never also a scroll.
+  const swipes = section === 'manage';
   useEffect(() => {
     let at = 0;
     let start: { x: number; y: number; scroll: number } | undefined;
@@ -154,18 +157,23 @@ export default function Shell({ baseUrl, section, children }: Props) {
       enter(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up');
     };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+    if (swipes) {
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: true });
+      window.addEventListener('touchend', onTouchEnd, { passive: true });
+      window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+      // Swiping down at the top of a page would otherwise pull to refresh.
+      document.documentElement.style.overscrollBehaviorY = 'none';
+    }
     return () => {
+      document.documentElement.style.overscrollBehaviorY = '';
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('touchcancel', onTouchEnd);
     };
-  }, [skin, setHelldivers]);
+  }, [skin, setHelldivers, swipes]);
 
   const toggle = () => {
     // In Helldivers mode the button is the way out, back to whatever light/dark was before.
