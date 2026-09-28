@@ -1,4 +1,4 @@
-import type { Album } from './albums';
+import { addedOn, arrivalUnknown, type Album } from './albums';
 
 export interface Count {
   label: string;
@@ -46,7 +46,8 @@ export function collectionStats(collection: Album[], wishlist: Album[], baseUrl:
   const href = (album: Album) => `${baseUrl}/albums/${album.id}/`;
 
   // Every month from the first addition to now, so quiet months show as gaps.
-  const added = collection.map((album) => monthOf(album.data.acquiredAt ?? album.data.addedAt));
+  // CDs received at an unknown date have no month to count in.
+  const added = collection.filter((album) => !arrivalUnknown(album)).map((album) => monthOf(addedOn(album)));
   const perMonth = new Map(tally(added).map(({ label, count }) => [label, count]));
   const months: Count[] = [];
   if (added.length) {

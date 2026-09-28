@@ -126,7 +126,7 @@ async function enrich(name: string) {
     }
   }
   if (isEmpty(data.addedBy)) fill('addedBy', await addedBy(file));
-  if (data.status === 'collection' && isEmpty(data.acquiredAt)) fill('acquiredAt', gotItOn(file));
+  if (data.status === 'collection' && isEmpty(data.acquiredAt) && !data.acquiredUnknown) fill('acquiredAt', gotItOn(file));
 
   if (!filled.length) return false;
   await writeFile(file, `---\n${doc.toString({ lineWidth: 0 })}---\n${match[2]}`);

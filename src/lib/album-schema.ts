@@ -42,6 +42,9 @@ export const albumSchema = <Image extends z.ZodType>(image: () => Image) =>
     addedBy: z.enum(people).optional(),
     addedAt: z.coerce.date(),
     acquiredAt: z.coerce.date().optional(),
+    // "Received but unknown": we have it but don't know since when. The site
+    // shows it as the oldest addition. A filled-in acquiredAt wins over it.
+    acquiredUnknown: z.boolean().default(false),
     note: z.string().max(280).optional(),
     favorite: z.boolean().default(false),
     // Top-level rather than grouped: Sveltia only prefills top-level fields
