@@ -11,7 +11,7 @@ genres:
   - psychedelic rock
   - heavy psych
   - garage psych
-owner: shared
+owner: arthur
 note: THIS IS A BOOTLEG, NOT AN ACTUAL CD
 favorite: false
 cover: ../../assets/covers/king-gizzard-the-lizard-wizard-nonagon-infinity.jpg
