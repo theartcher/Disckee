@@ -2,7 +2,7 @@
 title: Collected
 artist: ABBA
 status: collection
-acquiredAt: 2026-09-27
+acquiredUnknown: true
 year: 2011
 label: Polar
 genres:
@@ -13,10 +13,6 @@ owner: marlou
 favorite: false
 cover: ../../assets/covers/abba-collected.jpg
 coverCredit: cover-art-archive
-musicbrainzId: de74c3ed-0952-4397-9135-76f96cd56022
-barcode: '600753337776'
-addedBy: arthur
-addedAt: 2026-09-27
 tracklist:
   - position: 1-1
     title: Ring Ring
@@ -168,4 +164,8 @@ tracklist:
   - position: 3-17
     title: I Let the Music Speak
     duration: 5:21
+musicbrainzId: de74c3ed-0952-4397-9135-76f96cd56022
+barcode: '600753337776'
+addedBy: arthur
+addedAt: 2026-09-27
 ---
