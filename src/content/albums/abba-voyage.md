@@ -2,6 +2,7 @@
 title: Voyage
 artist: ABBA
 status: collection
+acquiredAt: 2021-11-21
 acquiredUnknown: true
 year: 2021
 label: Polar
