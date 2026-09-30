@@ -2,7 +2,7 @@
 title: CALM
 artist: 5 Seconds of Summer
 status: collection
-acquiredAt: 2026-09-27
+acquiredUnknown: true
 year: 2020
 label: 5SOS
 genres:
@@ -12,6 +12,7 @@ genres:
 owner: marlou
 favorite: false
 cover: ../../assets/covers/5-seconds-of-summer-calm.jpg
+coverCredit: cover-art-archive
 tracklist:
   - position: '1'
     title: Red Desert
@@ -62,5 +63,4 @@ musicbrainzId: b373c3e9-ec47-4d51-a94e-1a4e5cc4ce57
 barcode: '602508748172'
 addedBy: marlou
 addedAt: 2026-09-27
-coverCredit: cover-art-archive
 ---
