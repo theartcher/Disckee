@@ -2,7 +2,8 @@
 title: 'PTX Presents: Top Pop, Vol. I'
 artist: Pentatonix
 status: collection
-acquiredUnknown: true
+acquiredAt: 2023-03-04
+acquiredUnknown: false
 year: 2018
 label: RCA
 genres:
