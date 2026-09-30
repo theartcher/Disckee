@@ -2,7 +2,7 @@
 title: Zumba lessen
 artist: Various Artists
 status: collection
-acquiredAt: 2026-09-27
+acquiredUnknown: true
 year: 2009
 genres:
   - Zumba
