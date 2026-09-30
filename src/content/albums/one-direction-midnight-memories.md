@@ -2,7 +2,8 @@
 title: Midnight Memories
 artist: One Direction
 status: collection
-acquiredUnknown: true
+acquiredAt: 2023-03-04
+acquiredUnknown: false
 year: 2013
 label: Syco Music
 genres:
