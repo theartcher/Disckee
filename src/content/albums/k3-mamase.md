@@ -2,7 +2,7 @@
 title: MaMaSé!
 artist: K3
 status: collection
-acquiredAt: 2026-09-27
+acquiredUnknown: true
 year: 2009
 label: Studio 100
 genres:
