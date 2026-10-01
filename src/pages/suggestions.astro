@@ -7,6 +7,6 @@ import { loadSuggestions } from '../lib/suggestions';
 const suggestions = await loadSuggestions();
 ---
 
-<Base title="Suggestions">
+<Base title="Suggestions" noindex>
   <SuggestionsPage client:only="react" baseUrl={baseUrl} suggestions={suggestions} />
 </Base>

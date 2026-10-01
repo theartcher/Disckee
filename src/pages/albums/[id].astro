@@ -13,6 +13,12 @@ const { album } = Astro.props as { album: Album };
 const detail = await toDetail(album);
 ---
 
-<Base title={`${detail.title} by ${detail.artist}`}>
+<Base
+  title={`${detail.title} by ${detail.artist}`}
+  description={`${detail.title} by ${detail.artist}${detail.year ? ` (${detail.year})` : ''}, ${
+    detail.status === 'wishlist' ? "on Arthur and Marlou's wishlist" : "in Arthur and Marlou's CD collection"
+  } on Disckee.`}
+  image={detail.cover?.src}
+>
   <AlbumPage client:only="react" baseUrl={baseUrl} album={detail} />
 </Base>

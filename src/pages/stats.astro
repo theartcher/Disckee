@@ -7,6 +7,6 @@ import { collectionStats } from '../lib/stats';
 const stats = collectionStats(await albumsByStatus('collection'), await albumsByStatus('wishlist'), baseUrl);
 ---
 
-<Base title="Stats">
+<Base title="Stats" description="Numbers about Arthur and Marlou's CD collection.">
   <StatsPage client:only="react" baseUrl={baseUrl} stats={stats} />
 </Base>

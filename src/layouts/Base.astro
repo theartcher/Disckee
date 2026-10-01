@@ -5,9 +5,31 @@ interface Props {
   title?: string;
   /** Which home-screen app this page installs as: the site, or /add on its own. */
   app?: 'site' | 'add';
+  /** The line search engines and link previews show under the title. */
+  description?: string;
+  /** A picture for link previews, like an album cover. Defaults to the app icon. */
+  image?: string;
+  /** Keep owners' tools and the 404 page out of search results. */
+  noindex?: boolean;
 }
-const { title, app = 'site' } = Astro.props;
+const {
+  title,
+  app = 'site',
+  description = "Disckee is Arthur and Marlou's CD collection and wishlist.",
+  image,
+  noindex = false,
+} = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const fullTitle = title ? `${title} · Disckee` : 'Disckee';
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const imageUrl = new URL(image ?? `${base}/icons/icon-512.png`, Astro.site).href;
+// Tells Google the site's name is "Disckee", so results show it instead of the github.io address.
+const siteData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Disckee',
+  url: new URL(`${base}/`, Astro.site).href,
+};
 ---
 
 <!doctype html>
@@ -17,6 +39,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
     <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
+    <link rel="sitemap" href={`${base}/sitemap.xml`} />
     <link rel="manifest" href={`${base}/${app === 'add' ? 'add' : 'manifest'}.webmanifest`} />
     <link rel="apple-touch-icon" href={`${base}/icons/apple-touch-icon.png`} />
     <meta name="apple-mobile-web-app-title" content={app === 'add' ? 'Add CD' : 'Disckee'} />
@@ -24,7 +47,17 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141414" media="(prefers-color-scheme: dark)" />
-    <title>{title ? `${title} · Disckee` : 'Disckee'}</title>
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <meta property="og:site_name" content="Disckee" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imageUrl} />
+    <meta name="twitter:card" content="summary" />
+    {!title && <script type="application/ld+json" set:html={JSON.stringify(siteData)} />}
     <script is:inline>
       // Pick the theme before the page renders so it doesn't flash white in dark mode.
       try {
