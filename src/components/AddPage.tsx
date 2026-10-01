@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Spin, Steps, Tag, Typography, theme } from 'antd';
 import { CheckCircleOutlined, EditOutlined, HeartOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
-import { SectionTitle } from './PageHeader';
+import PageHeader, { SectionTitle } from './PageHeader';
+import { AdminCrumb } from './ManagePage';
 import Scanner from './Scanner';
 import {
   coverThumbnail,
@@ -80,17 +81,16 @@ interface Props {
 export default function AddPage({ baseUrl }: Props) {
   return (
     <Shell baseUrl={baseUrl} section="add">
-      <Flex vertical gap={16} style={{ maxWidth: 640, width: '100%', margin: '0 auto' }}>
-        <div>
-          <Typography.Title level={2} style={{ marginBottom: 4 }}>
-            Add a CD
-          </Typography.Title>
-          <Typography.Text type="secondary">
-            Scan the barcode on the back, pick the right release, then save it in the editor.
-          </Typography.Text>
-        </div>
-        <Adder baseUrl={baseUrl} />
-      </Flex>
+      <div style={{ maxWidth: 640, width: '100%', margin: '0 auto' }}>
+        <PageHeader
+          above={<AdminCrumb baseUrl={baseUrl} page="Add a CD" />}
+          title="Add a CD"
+          subtitle="Scan the barcode on the back, pick the right release, then save it in the editor."
+        />
+        <Flex vertical gap={16}>
+          <Adder baseUrl={baseUrl} />
+        </Flex>
+      </div>
     </Shell>
   );
 }

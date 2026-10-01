@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Button, Empty, Flex, Typography, theme } from 'antd';
 import { CustomerServiceOutlined, HeartOutlined } from '@ant-design/icons';
 import Shell from './Shell';
+import PageHeader, { SectionTitle } from './PageHeader';
+import { AdminCrumb } from './ManagePage';
 import { newAlbumUrl } from '../lib/handoff';
 import type { SuggestedAlbum, Suggestions } from '../lib/suggestions';
 
@@ -87,18 +89,19 @@ export default function SuggestionsPage({ baseUrl, suggestions }: Props) {
   const { more, similar } = suggestions;
   return (
     <Shell baseUrl={baseUrl} section="suggestions">
-      <Typography.Title level={2} style={{ marginBottom: 4 }}>
-        Suggestions
-      </Typography.Title>
-      <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
-        Ideas for the wishlist, based on what's already on the shelf. Updated every time the site is published.
-      </Typography.Paragraph>
+      <PageHeader
+        above={<AdminCrumb baseUrl={baseUrl} page="Suggestions" />}
+        title="Suggestions"
+        subtitle="Ideas for the wishlist, based on what's already on the shelf. Updated every time the site is published."
+      />
 
-      {!more.length && !similar.length && <Empty description="No suggestions yet. They appear after the next publish." />}
+      {!more.length && !similar.length && (
+        <Empty description="No suggestions yet. They appear after the next publish." style={{ marginBottom: 32 }} />
+      )}
 
       {similar.length > 0 && (
         <section style={{ marginBottom: 32 }}>
-          <Typography.Title level={4}>You might also like</Typography.Title>
+          <SectionTitle>You might also like</SectionTitle>
           <Flex gap={12} style={row}>
             {similar.map((item) => (
               <AlbumTile
@@ -115,8 +118,8 @@ export default function SuggestionsPage({ baseUrl, suggestions }: Props) {
       )}
 
       {more.map((item) => (
-        <section key={item.artistId} style={{ marginBottom: 24 }}>
-          <Typography.Title level={4}>More from {item.artist}</Typography.Title>
+        <section key={item.artistId} style={{ marginBottom: 32 }}>
+          <SectionTitle>More from {item.artist}</SectionTitle>
           <Flex gap={12} style={row}>
             {item.albums.map((album) => (
               <AlbumTile key={album.id} baseUrl={baseUrl} album={album} artist={item.artist} caption={album.year ? String(album.year) : item.artist} />
@@ -125,7 +128,7 @@ export default function SuggestionsPage({ baseUrl, suggestions }: Props) {
         </section>
       ))}
 
-      <Typography.Paragraph type="secondary" style={{ marginTop: 16, fontSize: 12 }}>
+      <Typography.Paragraph type="secondary" style={{ fontSize: 12 }}>
         Albums from MusicBrainz, similar artists from ListenBrainz.
       </Typography.Paragraph>
     </Shell>
