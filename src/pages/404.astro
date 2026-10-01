@@ -6,6 +6,6 @@ import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
 const collection = await albumsByStatus('collection');
 ---
 
-<Base title="Not found">
+<Base title="Not found" noindex>
   <NotFoundPage client:only="react" baseUrl={baseUrl} albums={await Promise.all(collection.map(toCard))} />
 </Base>

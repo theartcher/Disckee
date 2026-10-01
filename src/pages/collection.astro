@@ -6,6 +6,6 @@ import { albumsByStatus, baseUrl, toCard } from '../lib/albums';
 const albums = await Promise.all((await albumsByStatus('collection')).map(toCard));
 ---
 
-<Base title="Collection">
+<Base title="Collection" description="Every CD Arthur and Marlou own, with covers and tracklists.">
   <AlbumListPage client:only="react" baseUrl={baseUrl} section="collection" title="Our collection" albums={albums} home />
 </Base>
