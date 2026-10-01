@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Card, Col, Flex, Progress, Row, Statistic, Tag, Tooltip, Typography, theme } from 'antd';
 import { ClockCircleOutlined, CustomerServiceOutlined, TeamOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import Shell from './Shell';
+import PageHeader from './PageHeader';
 import type { Count, Stats } from '../lib/stats';
 
 interface Props {
@@ -57,7 +58,7 @@ function Columns({
                   width: '100%',
                   height: `${(item.count / max) * 120}px`,
                   minHeight: item.count ? 4 : 1,
-                  borderRadius: '4px 4px 0 0',
+                  borderRadius: `${token.borderRadiusSM}px ${token.borderRadiusSM}px 0 0`,
                   background: item.count ? token.colorPrimary : token.colorBorderSecondary,
                 }}
               />
@@ -91,20 +92,17 @@ export default function StatsPage({ baseUrl, stats }: Props) {
   if (!stats.cds) {
     return (
       <Shell baseUrl={baseUrl} section="stats">
-        <Typography.Title level={2}>Stats</Typography.Title>
-        <Typography.Paragraph type="secondary">Nothing to count yet. Add a CD first!</Typography.Paragraph>
+        <PageHeader title="Stats" subtitle="Nothing to count yet. Add a CD first!" />
       </Shell>
     );
   }
 
   return (
     <Shell baseUrl={baseUrl} section="stats">
-      <Typography.Title level={2} style={{ marginBottom: 4 }}>
-        Stats
-      </Typography.Title>
-      <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
-        Our shelf in numbers. {stats.wishlist > 0 && `Plus ${plural(stats.wishlist, 'CD')} on the wishlist.`}
-      </Typography.Paragraph>
+      <PageHeader
+        title="Stats"
+        subtitle={`Our shelf in numbers.${stats.wishlist > 0 ? ` Plus ${plural(stats.wishlist, 'CD')} on the wishlist.` : ''}`}
+      />
 
       <Row gutter={[16, 16]}>
         {[
@@ -141,7 +139,7 @@ export default function StatsPage({ baseUrl, stats }: Props) {
             </Flex>
             {adders > 0 && (
               <>
-                <Typography.Paragraph type="secondary" style={{ margin: '20px 0 8px' }}>
+                <Typography.Paragraph type="secondary" style={{ margin: '24px 0 8px' }}>
                   Who added the most?
                 </Typography.Paragraph>
                 <Flex vertical gap={4}>

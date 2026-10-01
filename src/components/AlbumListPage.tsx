@@ -289,29 +289,32 @@ export default function AlbumListPage({ baseUrl, section, title, subtitle, album
       ) : (
         <Row gutter={[16, 16]}>
           {shown.map((album, i) => (
-            <Col key={album.id} xs={12} sm={8} md={6} xl={4} style={{ position: 'relative' }}>
-              <a href={album.href} style={{ display: 'block', height: '100%' }}>
-                <Card
-                  hoverable
-                  style={{ height: '100%' }}
-                  styles={{ body: { padding: 12 } }}
-                  cover={
-                    <CoverImage
-                      cover={album.cover}
-                      alt={`${album.title} by ${album.artist}`}
-                      sizes="(min-width: 1200px) 180px, (min-width: 768px) 25vw, (min-width: 576px) 33vw, 50vw"
-                      eager={i < 6}
+            <Col key={album.id} xs={12} sm={8} md={6} xl={4}>
+              {/* The share button is placed against the card itself, so it doesn't depend on the grid's gutter. */}
+              <div style={{ position: 'relative', height: '100%' }}>
+                <a href={album.href} style={{ display: 'block', height: '100%' }}>
+                  <Card
+                    hoverable
+                    style={{ height: '100%' }}
+                    styles={{ body: { padding: 12 } }}
+                    cover={
+                      <CoverImage
+                        cover={album.cover}
+                        alt={`${album.title} by ${album.artist}`}
+                        sizes="(min-width: 1200px) 180px, (min-width: 768px) 25vw, (min-width: 576px) 33vw, 50vw"
+                        eager={i < 6}
+                      />
+                    }
+                  >
+                    <Card.Meta
+                      title={album.title}
+                      description={album.year ? `${album.artist} · ${album.year}` : album.artist}
                     />
-                  }
-                >
-                  <Card.Meta
-                    title={album.title}
-                    description={album.year ? `${album.artist} · ${album.year}` : album.artist}
-                  />
-                </Card>
-              </a>
-              {/* Outside the link: a button can't sit inside one. */}
-              {share && <div style={{ position: 'absolute', top: 8, right: 16 }}>{shareItem(album)}</div>}
+                  </Card>
+                </a>
+                {/* Outside the link: a button can't sit inside one. */}
+                {share && <div style={{ position: 'absolute', top: 8, right: 8 }}>{shareItem(album)}</div>}
+              </div>
             </Col>
           ))}
         </Row>
