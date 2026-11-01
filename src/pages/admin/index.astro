@@ -58,11 +58,24 @@ const enabled = Boolean(authUrl) || import.meta.env.DEV;
         <>
           {/* Back to the site, or to /add for scanning the next CD after a save. */}
           <nav id="back">
-            <a href={`${base}/`}>← Back to home</a>
+            <a id="back-site" href={`${base}/`}>← Back to home</a>
             <a class="secondary" href={`${base}/add/`}>
               Back to scan
             </a>
           </nav>
+          <script>
+          // Opened with Edit on a CD's page: the way back goes to that CD.
+          // The admin's own navigation is in the URL hash, so the referrer stays that page.
+          try {
+            const from = new URL(document.referrer);
+            const albums = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/albums/`;
+            const link = document.querySelector<HTMLAnchorElement>('#back-site');
+            if (link && from.origin === location.origin && from.pathname.startsWith(albums)) {
+              link.href = from.pathname;
+              link.textContent = '← Back to the CD';
+            }
+          } catch {}
+          </script>
           <script>
           import { init } from '@sveltia/cms';
           import { cmsConfig } from '../../lib/cms';

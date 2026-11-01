@@ -1,11 +1,12 @@
 import { Breadcrumb, Button, Col, Descriptions, List, Row, Space, Tag, Typography } from 'antd';
 import { useState } from 'react';
-import { ExportOutlined, HeartOutlined } from '@ant-design/icons';
+import { EditOutlined, ExportOutlined, HeartOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import { SectionTitle } from './PageHeader';
 import CoverImage from './CoverImage';
 import ShareButton from './ShareButton';
 import type { AlbumDetail } from '../lib/albums';
+import { editAlbumUrl } from '../lib/handoff';
 
 interface Props {
   baseUrl: string;
@@ -22,9 +23,22 @@ function listHref(baseUrl: string, status: AlbumDetail['status']) {
   return list;
 }
 
+/**
+ * Whether this browser is signed in to the admin, so only the owners see Edit.
+ * Only checks that Sveltia's sign-in exists: the token in it is never read.
+ */
+function signedInToAdmin() {
+  try {
+    return localStorage.getItem('sveltia-cms.user') !== null;
+  } catch {
+    return false;
+  }
+}
+
 export default function AlbumPage({ baseUrl, album }: Props) {
   const onWishlist = album.status === 'wishlist';
   const [back] = useState(() => listHref(baseUrl, album.status));
+  const [canEdit] = useState(signedInToAdmin);
   const facts = [
     album.year && { key: 'year', label: 'Year', children: album.year },
     { key: 'owner', label: onWishlist ? 'Wished for by' : 'Belongs to', children: album.owner },
@@ -84,18 +98,26 @@ export default function AlbumPage({ baseUrl, album }: Props) {
             </Typography.Paragraph>
           )}
 
-          {/* Wishlist CDs only: Share for the family chat, and the release details for whoever buys it. */}
-          {onWishlist && (
+          {/* Wishlist CDs: Share for the family chat, and the release details for whoever buys it.
+              Signed-in owners: Edit, straight to this CD in the admin. */}
+          {(onWishlist || canEdit) && (
             <Space wrap style={{ marginTop: 16 }}>
-              <ShareButton
-                href={album.href}
-                title={`${album.title} by ${album.artist}`}
-                text={`On Arthur & Marlou's wishlist: ${album.title} by ${album.artist}`}
-                label="Share"
-              />
-              {album.musicbrainzUrl && (
+              {onWishlist && (
+                <ShareButton
+                  href={album.href}
+                  title={`${album.title} by ${album.artist}`}
+                  text={`On Arthur & Marlou's wishlist: ${album.title} by ${album.artist}`}
+                  label="Share"
+                />
+              )}
+              {onWishlist && album.musicbrainzUrl && (
                 <Button href={album.musicbrainzUrl} icon={<ExportOutlined />} target="_blank" rel="noopener">
                   View on MusicBrainz
+                </Button>
+              )}
+              {canEdit && (
+                <Button href={editAlbumUrl(baseUrl, album.id)} icon={<EditOutlined />}>
+                  Edit
                 </Button>
               )}
             </Space>
