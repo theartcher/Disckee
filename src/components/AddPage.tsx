@@ -32,6 +32,7 @@ import {
   recentHandoffs,
   rememberHandoff,
   type Draft,
+  type Duplicate,
   type Known,
   type Status,
 } from '../lib/handoff';
@@ -194,7 +195,9 @@ function Adder({ baseUrl }: Props) {
       ...(hasCover && { cover: frontCover500(choice.id), coverCredit: 'cover-art-archive' as const }),
     }),
   };
-  const duplicate = findDuplicate(known, { musicbrainz: choice?.id, barcode });
+  const duplicate = findDuplicate(known, { musicbrainz: choice?.id, barcode }, { artist: choice?.artist, title: choice?.title });
+  // A CD from the wishlist arrived: move that entry over instead of adding a second one.
+  const gotIt = duplicate?.album.slug && duplicate.album.status === 'wishlist' && status === 'collection' ? duplicate.album.slug : undefined;
 
   return (
     <>
@@ -362,28 +365,7 @@ function Adder({ baseUrl }: Props) {
 
       {choice && release && <ReleaseDetails id={choice.id} release={release} hasCover={hasCover} />}
 
-      {duplicate && (
-        <Alert
-          type="warning"
-          showIcon
-          title={duplicate.status === 'wishlist' ? "It's on your wishlist" : 'You already have this'}
-          description={
-            duplicate.slug
-              ? duplicate.status === 'wishlist'
-                ? 'Got it? Open it in the editor and set its status to In our collection.'
-                : 'It is already in the collection.'
-              : 'You added it from this phone in the last hour.'
-          }
-          action={
-            duplicate.slug && (
-              <Button href={editAlbumUrl(baseUrl, duplicate.slug)} icon={<EditOutlined />}>
-                {duplicate.status === 'wishlist' ? 'Got it' : 'Open'}
-              </Button>
-            )
-          }
-        />
-      )}
-
+      {duplicate && <DuplicateAlert duplicate={duplicate} adding={status} baseUrl={baseUrl} />}
 
       {draft && (
         // Stays in reach at the bottom of the screen, clear of the iPhone home bar.
@@ -397,16 +379,27 @@ function Adder({ baseUrl }: Props) {
             background: token.colorBgLayout,
           }}
         >
-          <Button
-            type={duplicate ? 'default' : 'primary'}
-            size="large"
-            block
-            href={newAlbumUrl(baseUrl, draft)}
-            onClick={() => rememberHandoff(draft)}
-            loading={!current}
-          >
-            {duplicate ? 'Add another copy' : status === 'wishlist' ? 'Add to the wishlist' : 'Add to the collection'}
-          </Button>
+          {gotIt ? (
+            <Flex vertical gap={8}>
+              <Button type="primary" size="large" block href={editAlbumUrl(baseUrl, gotIt)} icon={<CheckCircleOutlined />}>
+                Got it
+              </Button>
+              <Button type="text" block href={newAlbumUrl(baseUrl, draft)} onClick={() => rememberHandoff(draft)} loading={!current}>
+                Add as a new CD instead
+              </Button>
+            </Flex>
+          ) : (
+            <Button
+              type={duplicate ? 'default' : 'primary'}
+              size="large"
+              block
+              href={newAlbumUrl(baseUrl, draft)}
+              onClick={() => rememberHandoff(draft)}
+              loading={!current}
+            >
+              {duplicate ? 'Add another copy' : status === 'wishlist' ? 'Add to the wishlist' : 'Add to the collection'}
+            </Button>
+          )}
         </div>
       )}
     </>
@@ -594,6 +587,44 @@ function ByHand({
     <Button size="large" block icon={<EditOutlined />} href={newAlbumUrl(baseUrl, draft)} onClick={() => rememberHandoff(draft)}>
       {label}
     </Button>
+  );
+}
+
+/** Says where this CD already is, and how to get there. */
+function DuplicateAlert({ duplicate, adding, baseUrl }: { duplicate: Duplicate; adding: Status; baseUrl: string }) {
+  const { album, samePressing } = duplicate;
+  const pressing = samePressing ? '' : ' (another pressing)';
+  let title: string;
+  let description: string;
+  if (!album.slug) {
+    title = 'You just added this';
+    description = 'You added it from this phone in the last hour.';
+  } else if (album.status === 'collection') {
+    title = `You already have this${pressing}`;
+    description = samePressing ? 'It is already in the collection.' : 'Another pressing of this album is already in the collection.';
+  } else if (adding === 'collection') {
+    title = `It's on your wishlist${pressing}`;
+    description = 'Tap Got it to move it from the wishlist to the collection: set its status to In our collection and save. Its date added, tracklist and note stay.';
+  } else {
+    title = `It's already on your wishlist${pressing}`;
+    description = 'No need to add it again.';
+  }
+  // Got it is the main button below, so the wishlist-to-collection case needs no button here.
+  const open = album.slug && !(album.status === 'wishlist' && adding === 'collection');
+  return (
+    <Alert
+      type="warning"
+      showIcon
+      title={title}
+      description={description}
+      action={
+        open && (
+          <Button href={editAlbumUrl(baseUrl, album.slug!)} icon={<EditOutlined />}>
+            Open
+          </Button>
+        )
+      }
+    />
   );
 }
 

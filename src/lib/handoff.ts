@@ -41,6 +41,8 @@ export const editAlbumUrl = (baseUrl: string, slug: string) => `${baseUrl}/admin
 export interface Known {
   slug?: string;
   status: Status;
+  title?: string;
+  artist?: string;
   ids: { musicbrainz?: string; barcode?: string };
 }
 
@@ -74,17 +76,56 @@ export function recentHandoffs(): Known[] {
 
 export function rememberHandoff(draft: Draft) {
   try {
-    const item: Recent = { status: draft.status, ids: { musicbrainz: draft.musicbrainz, barcode: draft.barcode }, at: Date.now() };
+    const item: Recent = { status: draft.status, title: draft.title, artist: draft.artist, ids: { musicbrainz: draft.musicbrainz, barcode: draft.barcode }, at: Date.now() };
     localStorage.setItem(recentKey, JSON.stringify([...recentHandoffs(), item]));
   } catch {}
 }
 
 const sameBarcode = (a?: string, b?: string) => !!a && !!b && a.replace(/^0+/, '') === b.replace(/^0+/, '');
 
-/** The first known album with this release id or barcode. */
-export function findDuplicate(known: Known[], ids: { musicbrainz?: string; barcode?: string }) {
-  return (
+/**
+ * Artist or title reduced to what stays the same across pressings: no case,
+ * accents, punctuation or bracketed extras like "(Remastered)" or "[Deluxe]".
+ */
+export function sameAlbumKey(text: string) {
+  return text
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/\([^)]*\)|\[[^\]]*\]/g, ' ')
+    .replace(/&/g, ' and ')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+const sameAlbum = (album: Known, artist?: string, title?: string) =>
+  !!album.artist &&
+  !!album.title &&
+  !!artist &&
+  !!title &&
+  sameAlbumKey(album.artist) === sameAlbumKey(artist) &&
+  sameAlbumKey(album.title) === sameAlbumKey(title);
+
+export interface Duplicate {
+  album: Known;
+  /** False when only artist and title match: another pressing of the same album. */
+  samePressing: boolean;
+}
+
+/**
+ * A known album this CD duplicates: first the same pressing (release id or
+ * barcode), then the same artist and title in any pressing, collection first.
+ */
+export function findDuplicate(
+  known: Known[],
+  ids: { musicbrainz?: string; barcode?: string },
+  name: { artist?: string; title?: string } = {},
+): Duplicate | undefined {
+  const pressing =
     known.find((album) => ids.musicbrainz && album.ids.musicbrainz === ids.musicbrainz) ??
-    known.find((album) => sameBarcode(album.ids.barcode, ids.barcode))
-  );
+    known.find((album) => sameBarcode(album.ids.barcode, ids.barcode));
+  if (pressing) return { album: pressing, samePressing: true };
+  const matches = known.filter((album) => sameAlbum(album, name.artist, name.title));
+  const album = matches.find((match) => match.status === 'collection') ?? matches[0];
+  return album && { album, samePressing: false };
 }
