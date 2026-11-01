@@ -112,6 +112,7 @@ function Adder({ baseUrl }: Props) {
   const [lastHandoff] = useState(() => recentHandoffs().at(-1));
   const [details, setDetails] = useState<Details>();
   const abort = useRef<AbortController>(undefined);
+  const results = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -152,6 +153,11 @@ function Adder({ baseUrl }: Props) {
     run({ barcode, query }, (signal) => searchText(query.artist, query.title, signal));
   const lookUpId = (barcode: string | undefined) => (releaseId: string) =>
     run({ barcode, releaseId }, (signal) => findRelease(releaseId, signal));
+  // Picking from far down a long list folds it, so bring the picked release into view.
+  const pick = (id: string) => {
+    setSelected(id);
+    requestAnimationFrame(() => results.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  };
   const reset = () => {
     abort.current?.abort();
     setLookup({ state: 'idle' });
@@ -179,6 +185,7 @@ function Adder({ baseUrl }: Props) {
   const releaseId = lookup.state === 'idle' ? undefined : lookup.releaseId;
   const candidates = lookup.state === 'done' ? lookup.candidates : [];
   const choice = candidates.find((candidate) => candidate.id === selected);
+  const folded = !!choice && candidates.length > 1;
   const current = details?.id === selected ? details : undefined;
   const release = current?.release;
   const hasCover = !!release?.['cover-art-archive']?.front;
@@ -347,25 +354,36 @@ function Adder({ baseUrl }: Props) {
       )}
 
       {candidates.length > 0 && (
-        <>
-          <Typography.Text type="secondary">
-            {candidates.length === 1
-              ? 'One match on MusicBrainz.'
-              : `${candidates.length} releases match. Pick the one that looks like your CD.`}
-          </Typography.Text>
-          <Radio.Group value={selected} onChange={(event) => setSelected(event.target.value as string)} style={{ width: '100%' }}>
-            <Flex vertical gap={8}>
-              {candidates.map((candidate) => (
-                <CandidateCard key={candidate.id} candidate={candidate} selected={candidate.id === selected} />
-              ))}
-            </Flex>
-          </Radio.Group>
-        </>
+        // Once a release is picked, the list folds to just that one, so the
+        // warning and the buttons below it are in reach without scrolling.
+        <div ref={results} style={{ scrollMarginTop: 96 }}>
+          <Flex vertical gap={8}>
+            <Typography.Text type="secondary">
+              {candidates.length === 1
+                ? 'One match on MusicBrainz.'
+                : folded
+                  ? `You picked 1 of ${candidates.length} releases.`
+                  : `${candidates.length} releases match. Pick the one that looks like your CD.`}
+            </Typography.Text>
+            <Radio.Group value={selected} onChange={(event) => pick(event.target.value as string)} style={{ width: '100%' }}>
+              <Flex vertical gap={8}>
+                {(folded && choice ? [choice] : candidates).map((candidate) => (
+                  <CandidateCard key={candidate.id} candidate={candidate} selected={candidate.id === selected} />
+                ))}
+              </Flex>
+            </Radio.Group>
+            {folded && (
+              <Button block onClick={() => setSelected(undefined)}>
+                Show all {candidates.length} releases
+              </Button>
+            )}
+          </Flex>
+        </div>
       )}
 
-      {choice && release && <ReleaseDetails id={choice.id} release={release} hasCover={hasCover} />}
-
       {duplicate && <DuplicateAlert duplicate={duplicate} adding={status} baseUrl={baseUrl} />}
+
+      {choice && release && <ReleaseDetails id={choice.id} release={release} hasCover={hasCover} />}
 
       {draft && (
         // Stays in reach at the bottom of the screen, clear of the iPhone home bar.
