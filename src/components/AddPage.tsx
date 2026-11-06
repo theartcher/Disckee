@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Alert, Button, Card, Collapse, Descriptions, Flex, Form, Image, Input, Radio, Spin, Steps, Tag, Typography, theme } from 'antd';
+import { Alert, Button, Card, Collapse, Flex, Form, Image, Input, Radio, Spin, Steps, Tag, Typography, theme } from 'antd';
 import { CheckCircleOutlined, EditOutlined, HeartOutlined, LinkOutlined, ScanOutlined, SearchOutlined } from '@ant-design/icons';
 import Shell from './Shell';
 import PageHeader, { SectionTitle } from './PageHeader';
@@ -112,6 +112,7 @@ function Adder({ baseUrl }: Props) {
   const [lastHandoff] = useState(() => recentHandoffs().at(-1));
   const [details, setDetails] = useState<Details>();
   const abort = useRef<AbortController>(undefined);
+  const results = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!selected) return;
@@ -152,6 +153,11 @@ function Adder({ baseUrl }: Props) {
     run({ barcode, query }, (signal) => searchText(query.artist, query.title, signal));
   const lookUpId = (barcode: string | undefined) => (releaseId: string) =>
     run({ barcode, releaseId }, (signal) => findRelease(releaseId, signal));
+  // Picking from far down a long list folds it, so bring the picked release into view.
+  const pick = (id: string) => {
+    setSelected(id);
+    requestAnimationFrame(() => results.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+  };
   const reset = () => {
     abort.current?.abort();
     setLookup({ state: 'idle' });
@@ -347,23 +353,32 @@ function Adder({ baseUrl }: Props) {
       )}
 
       {candidates.length > 0 && (
-        <>
-          <Typography.Text type="secondary">
-            {candidates.length === 1
-              ? 'One match on MusicBrainz.'
-              : `${candidates.length} releases match. Pick the one that looks like your CD.`}
-          </Typography.Text>
-          <Radio.Group value={selected} onChange={(event) => setSelected(event.target.value as string)} style={{ width: '100%' }}>
+        // A long list of pressings until one is picked, then just that one,
+        // so the warning and the button are in reach without scrolling.
+        <div ref={results} style={{ scrollMarginTop: 96 }}>
+          {choice ? (
+            <PickedRelease
+              candidate={choice}
+              release={release}
+              loading={!current}
+              hasCover={hasCover}
+              others={candidates.length - 1}
+              onChange={() => setSelected(undefined)}
+            />
+          ) : (
             <Flex vertical gap={8}>
-              {candidates.map((candidate) => (
-                <CandidateCard key={candidate.id} candidate={candidate} selected={candidate.id === selected} />
-              ))}
+              <Typography.Text type="secondary">{candidates.length} releases match. Pick the one that looks like your CD.</Typography.Text>
+              <Card size="small" styles={{ body: { padding: 0 } }}>
+                <Radio.Group value={selected} onChange={(event) => pick(event.target.value as string)} style={{ width: '100%' }}>
+                  {candidates.map((candidate, index) => (
+                    <CandidateRow key={candidate.id} candidate={candidate} first={index === 0} />
+                  ))}
+                </Radio.Group>
+              </Card>
             </Flex>
-          </Radio.Group>
-        </>
+          )}
+        </div>
       )}
-
-      {choice && release && <ReleaseDetails id={choice.id} release={release} hasCover={hasCover} />}
 
       {duplicate && <DuplicateAlert duplicate={duplicate} adding={status} baseUrl={baseUrl} />}
 
@@ -408,66 +423,100 @@ function Adder({ baseUrl }: Props) {
 
 const placeholder = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1" fill="#8884"/></svg>')}`;
 
-/** What will be filled in, so it can be checked before opening the editor. */
-function ReleaseDetails({ id, release, hasCover }: { id: string; release: Release; hasCover: boolean }) {
+const yearOf = (date?: string) => date?.slice(0, 4);
+
+/**
+ * The picked release, as it will go into the editor: one card with the
+ * cover, the details that get filled in and the tracklist folded away.
+ */
+function PickedRelease({
+  candidate,
+  release,
+  loading,
+  hasCover,
+  others,
+  onChange,
+}: {
+  candidate: Candidate;
+  release?: Release;
+  loading: boolean;
+  hasCover: boolean;
+  others: number;
+  onChange: () => void;
+}) {
   const { token } = theme.useToken();
-  const year = releaseYear(release);
-  const genres = releaseGenres(release);
-  const label = releaseLabel(release);
-  const tracks = releaseTracklist(release);
+  const genres = release ? releaseGenres(release) : [];
+  const tracks = release ? releaseTracklist(release) : [];
+  const facts = [
+    (release && releaseYear(release)) ?? yearOf(candidate.date),
+    (release && releaseLabel(release)) ?? candidate.label,
+    candidate.country,
+    candidate.format,
+    candidate.tracks && `${candidate.tracks} tracks`,
+  ].filter(Boolean);
 
   return (
-    <Card size="small" title="This gets filled in">
-      <Flex gap={16} wrap>
-        {hasCover && (
+    <Card size="small">
+      <Flex gap={16} align="start">
+        <div style={{ width: 96, flexShrink: 0 }}>
           <Image
-            src={frontCover500(id)}
+            src={hasCover ? frontCover500(candidate.id) : coverThumbnail(candidate.id)}
             alt="Front cover"
-            width={120}
-            height={120}
-            style={{ objectFit: 'cover', borderRadius: token.borderRadiusSM }}
+            width={96}
+            height={96}
+            preview={hasCover}
+            style={{ objectFit: 'cover' }}
             fallback={placeholder}
           />
-        )}
-        <Descriptions
-          size="small"
-          column={1}
-          style={{ flex: 1, minWidth: 180 }}
-          items={[
-            { key: 'year', label: 'Year', children: year ?? '–' },
-            {
-              key: 'genres',
-              label: 'Genres',
-              children: genres.length ? (
-                <Flex wrap gap={4}>
-                  {genres.map((genre) => (
-                    <Tag key={genre} style={{ marginInlineEnd: 0 }}>
-                      {genre}
-                    </Tag>
-                  ))}
-                </Flex>
-              ) : (
-                '–'
-              ),
-            },
-            { key: 'label', label: 'Label', children: label ?? '–' },
-            { key: 'cover', label: 'Cover', children: hasCover ? 'From Cover Art Archive' : 'None found, add a photo' },
-          ]}
-        />
+        </div>
+        <Flex vertical gap={4} style={{ minWidth: 0, flex: 1 }}>
+          <Typography.Text strong style={{ fontSize: token.fontSizeLG }}>
+            {candidate.title}
+          </Typography.Text>
+          <Typography.Text>{candidate.artist}</Typography.Text>
+          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+            {facts.join(' · ')}
+            {candidate.disambiguation && ` (${candidate.disambiguation})`}
+          </Typography.Text>
+          {genres.length > 0 && (
+            <Flex wrap gap={4}>
+              {genres.map((genre) => (
+                <Tag key={genre} variant="outlined" style={{ marginInlineEnd: 0 }}>
+                  {genre}
+                </Tag>
+              ))}
+            </Flex>
+          )}
+        </Flex>
       </Flex>
-      {tracks.length > 0 && (
-        <Collapse
-          ghost
-          size="small"
-          style={{ marginTop: 8 }}
-          items={[
-            {
-              key: 'tracks',
-              label: `Tracklist, ${tracks.length} tracks (added when you publish)`,
-              children: <Tracklist tracks={tracks} />,
-            },
-          ]}
-        />
+      {loading ? (
+        <Flex justify="center" style={{ paddingTop: 12 }}>
+          <Spin size="small" />
+        </Flex>
+      ) : (
+        tracks.length > 0 && (
+          <Collapse
+            ghost
+            size="small"
+            style={{ marginTop: 8 }}
+            items={[{ key: 'tracks', label: `${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}, added when you publish`, children: <Tracklist tracks={tracks} /> }]}
+          />
+        )
+      )}
+      <Flex wrap gap={8} justify="space-between" align="center" style={{ marginTop: 8 }}>
+        <Typography.Link href={releaseUrl(candidate.id)} target="_blank" style={{ fontSize: token.fontSizeSM }}>
+          View on MusicBrainz
+        </Typography.Link>
+        {others > 0 && (
+          <Button type="link" size="small" onClick={onChange} style={{ paddingInline: 0, fontSize: token.fontSizeSM }}>
+            Change release
+          </Button>
+        )}
+      </Flex>
+      {!loading && !hasCover && (
+        <Typography.Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: token.fontSizeSM }}>
+          No cover on MusicBrainz, so add a photo in the editor.
+        </Typography.Text>
       )}
     </Card>
   );
@@ -489,10 +538,11 @@ function Tracklist({ tracks }: { tracks: Track[] }) {
   );
 }
 
-function CandidateCard({ candidate, selected }: { candidate: Candidate; selected: boolean }) {
+/** One pressing in the list of matches: the whole row picks it. */
+function CandidateRow({ candidate, first }: { candidate: Candidate; first: boolean }) {
   const { token } = theme.useToken();
   const details = [
-    candidate.date?.slice(0, 4),
+    yearOf(candidate.date),
     candidate.country,
     candidate.format,
     candidate.tracks && `${candidate.tracks} tracks`,
@@ -500,32 +550,38 @@ function CandidateCard({ candidate, selected }: { candidate: Candidate; selected
   ].filter(Boolean);
 
   return (
-    <Card size="small" style={{ borderColor: selected ? token.colorPrimary : undefined }}>
-      <Radio value={candidate.id} style={{ width: '100%', alignItems: 'center' }}>
-        <Flex gap={12} align="center">
-          <Image
-            src={coverThumbnail(candidate.id)}
-            alt=""
-            width={64}
-            height={64}
-            preview={false}
-            style={{ objectFit: 'cover', borderRadius: token.borderRadiusSM }}
-            fallback={placeholder}
-          />
-          <Flex vertical style={{ minWidth: 0 }}>
-            <Typography.Text strong>{candidate.title}</Typography.Text>
-            <Typography.Text>{candidate.artist}</Typography.Text>
-            <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
-              {details.join(' · ')}
-              {candidate.disambiguation && ` (${candidate.disambiguation})`}
-            </Typography.Text>
-            <Typography.Link href={releaseUrl(candidate.id)} target="_blank" style={{ fontSize: token.fontSizeSM }}>
-              View on MusicBrainz
-            </Typography.Link>
-          </Flex>
+    <Radio
+      value={candidate.id}
+      style={{
+        display: 'flex',
+        width: '100%',
+        alignItems: 'center',
+        margin: 0,
+        padding: 12,
+        borderTop: first ? undefined : `1px solid ${token.colorBorderSecondary}`,
+      }}
+    >
+      <Flex gap={12} align="center">
+        <Image
+          src={coverThumbnail(candidate.id)}
+          alt=""
+          width={48}
+          height={48}
+          preview={false}
+          style={{ objectFit: 'cover', borderRadius: token.borderRadiusSM }}
+          fallback={placeholder}
+        />
+        <Flex vertical style={{ minWidth: 0 }}>
+          <Typography.Text strong ellipsis>
+            {candidate.title}
+            {candidate.disambiguation && <Typography.Text type="secondary"> ({candidate.disambiguation})</Typography.Text>}
+          </Typography.Text>
+          <Typography.Text type="secondary" style={{ fontSize: token.fontSizeSM }}>
+            {candidate.artist} · {details.join(' · ')}
+          </Typography.Text>
         </Flex>
-      </Radio>
-    </Card>
+      </Flex>
+    </Radio>
   );
 }
 
@@ -595,19 +651,19 @@ function DuplicateAlert({ duplicate, adding, baseUrl }: { duplicate: Duplicate; 
   const { album, samePressing } = duplicate;
   const pressing = samePressing ? '' : ' (another pressing)';
   let title: string;
-  let description: string;
+  let description: string | undefined;
   if (!album.slug) {
     title = 'You just added this';
     description = 'You added it from this phone in the last hour.';
   } else if (album.status === 'collection') {
     title = `You already have this${pressing}`;
-    description = samePressing ? 'It is already in the collection.' : 'Another pressing of this album is already in the collection.';
+    description = samePressing ? undefined : 'Another pressing of this album is in the collection.';
   } else if (adding === 'collection') {
     title = `It's on your wishlist${pressing}`;
-    description = 'Tap Got it to move it from the wishlist to the collection: set its status to In our collection and save. Its date added, tracklist and note stay.';
+    description = 'Got it opens it in the editor: set its status to In our collection and save. Its date added and note stay.';
   } else {
     title = `It's already on your wishlist${pressing}`;
-    description = 'No need to add it again.';
+    description = undefined;
   }
   // Got it is the main button below, so the wishlist-to-collection case needs no button here.
   const open = album.slug && !(album.status === 'wishlist' && adding === 'collection');
